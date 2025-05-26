@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Device Setting - WASH24</title>
+  <link rel="icon" href="data:,">
+  <!-- Include Custom CSS -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="header">Settings</h1>
+    <form action="/save_settings" method="POST">
+      <div class="cards-container">
+        <div class="card">
+          <h2>Device Info</h2>
+          <label for="device_name">Device Name:</label>
+          <input type="text" class="form-control" id="device_name" name="device_name" required value="%DEVICE_NAME%">
+
+          <label for="device_type">Device Type:</label>
+          <select class="form-control" id="device_type" name="device_type" required>
+            <option value="washing_machine" %WASHING_MACHINE_SELECTED%>Washing Machine</option>
+            <option value="vending_machine" %VENDING_MACHINE_SELECTED%>Vending Machine</option>
+            <option value="dryer_machine" %DRYER_MACHINE_SELECTED%>Dryer Machine</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <h2>Network</h2>
+          <label for="wifi_ssid">WiFi SSID:</label>
+          <input type="text" class="form-control" id="wifi_ssid" name="wifi_ssid" required value="%WIFI_SSID%">
+          <label for="wifi_pass">WiFi Password:</label>
+          <input type="password" class="form-control" id="wifi_pass" name="wifi_pass" required value="%WIFI_PASS%">
+        </div>
+
+        <div class="card">
+          <h2>Security</h2>
+          <label for="username">Username:</label>
+          <input type="text" class="form-control" id="username" name="username" value="%ADMIN_USER%">
+          <label for="password">Password:</label>
+          <input type="password" class="form-control" id="password" name="password" value="%ADMIN_PASS%">
+        </div>
+
+        <div class="card">
+          <h2>REST API</h2>
+          <label for="api_url">REST API URL:</label>
+          <input type="url" class="form-control" id="api_url" name="api_url" required value="%API_URL%">
+          <label for="client_id">Client ID:</label>
+          <input type="text" class="form-control" id="client_id" name="client_id" required value="%CLIENT_ID%">
+          <label for="api_key">API Key:</label>
+          <textarea class="form-control" id="api_key" name="api_key" rows="3" required>%API_KEY%</textarea>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <!-- Save Button -->
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+        
+      </div>
+    </form>
+  </div>
+</body>

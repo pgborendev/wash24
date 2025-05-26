@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Device Setting - WASH24</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="container">
+  <!-- Header -->
+  <header>
+    <h1>WASH24</h1>
+  </header>
+
+  <!-- Body -->
+  <div class="content-section">
+    <h2>Device Settings</h2>
+    <ul>
+      <li><strong>Device Name:</strong> <span id="deviceName">%DEVICE_NAME%</span></li>
+      <li><strong>WiFi SSID:</strong> <span id="wifiSSID">%WIFI_SSID%</span></li>
+      <li><strong>API URL:</strong> <span id="apiUrl">%API_URL%</span></li>
+      <li><strong>Client ID:</strong> <span id="clientId">%CLIENT_ID%</span></li>
+      <li><strong>API Key:</strong> <span id="apiKey">%API_KEY%</span></li>
+    </ul>
+  </div>
+
+  <div class="content-section">
+    <h2>Network Status</h2>
+    <ul>
+      <li><strong>WiFi Status:</strong> <span id="wifiStatus">%WIFI_STATUS%</span></li>
+      <li><strong>IP Address:</strong> <span id="ipAddress">%IP_ADDRESS%</span></li>
+      <li><strong>Subnet Mask:</strong> <span id="subnetMask">%SUBNET_MASK%</span></li>
+    </ul>
+  </div>
+
+  <div class="content-section">
+    <h2>Device Control</h2>
+    <div class="controlButtons">
+      <button type="button" class="btn btn-primary" onclick="location.href='/setting'">Setting</button>
+      <button type="button" class="btn btn-success" onclick="confirmAction('/reboot', 'Are you sure you want to reboot the device?')">Reboot</button>
+      <button type="button" class="btn btn-error" onclick="confirmAction('/factory_reset', 'Are you sure you want to factory reset the device? This action cannot be undone.')">Factory Reset</button>
+      <button type="button" class="btn btn-gray" onclick="location.href='/logout'">Log Out</button>
+    </div>
+  </div>
+
+  <script>
+    function confirmAction(url, message) {
+      if (confirm(message)) {
+        location.href = url;
+      }
+    }
+  </script>
+
+  <div class="content-section">
+    <h2>Machine Control: <span id="machineStatus">%MACHINE_STATUS%</span></h2>
+    <div class="controlButtons">
+      %CONTROL_BUTTONS%
+    </div>
+  </div>   
+  %PROGRAM_SECTION%
+</body>
+</html>

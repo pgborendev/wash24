@@ -1,0 +1,339 @@
+/* ================ */
+    /* VARIABLES */
+    /* ================ */
+    :root {
+      --primary-color: #007BFF; /* Blue */
+      --primary-hover: #0056b3;
+      --success-color: #28a745; /* Green */
+      --success-hover: #218838;
+      --error-color: #dc3545; /* Red */
+      --error-hover: #c82333;
+      --gray-color: #6c757d; /* Gray */
+      --gray-hover: #5a6268;
+      --light-gray: #f4f4f9;
+      --medium-gray: #ccc;
+      --dark-gray: #333;
+      --white: #fff;
+      --border-radius: 8px;
+      --box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      --transition: all 0.3s ease;
+    }
+
+    /* ================ */
+    /* BASE STYLES */
+    /* ================ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    main {
+      flex: 1;
+    }
+
+    /* ================ */
+    /* HEADER STYLES */
+    /* ================ */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--medium-gray);
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      margin: 0;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #333333;
+    }
+
+    /* ================ */
+    /* NAVIGATION BUTTONS */
+    /* ================ */
+    .nav-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    /* ================ */
+    /* CONTENT STYLES */
+    /* ================ */
+    .content-section {
+      background: var(--white);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--medium-gray);
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--light-gray);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    li strong {
+      min-width: 150px;
+      display: inline-block;
+      margin-right: 1rem;
+    }
+
+    /* Cards */
+    .cards-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #007bff;
+    }
+
+    /* Form Inputs */
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    .form-control:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 4px rgba(0, 123, 255, 0.25);
+    }
+
+    /* ================ */
+    /* BUTTONS */
+    /* ================ */
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      color: #ffffff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+    }
+
+    .btn-success:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-error {
+      background-color: var(--error-color);
+    }
+
+    .btn-error:hover {
+      background-color: var(--error-hover);
+    }
+
+    .btn-gray {
+      background-color: var(--gray-color);
+    }
+
+    .btn-gray:hover {
+      background-color: var(--gray-hover);
+    }
+
+    .btn-green {
+      background-color: green;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-red {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-blue {
+      background-color: blue;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-yellow {
+      background-color: yellow;
+      color: black;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .button-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    #controlButtons {
+      display: flex;
+      gap: 10px; /* Add consistent spacing between buttons */
+      flex-wrap: wrap; /* Allow buttons to wrap to the next line if needed */
+      justify-content: center; /* Center the buttons horizontally */
+    }
+
+    #controlButtons button {
+      margin: 0; /* Remove any extra margins */
+      padding: 10px 20px; /* Ensure consistent padding */
+    }
+
+    /* ================ */
+    /* FOOTER */
+    /* ================ */
+    footer {
+      text-align: center;
+      padding: 1rem;
+      margin-top: auto;
+      border-top: 1px solid var(--medium-gray);
+      color: var(--medium-gray);
+      font-size: 0.9rem;
+    }
+
+    /* ================ */
+    /* RESPONSIVE ADJUSTMENTS */
+    /* ================ */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .nav-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 1rem;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
+      li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+      }
+
+      li strong {
+        min-width: 100%;
+        margin-bottom: 0.3rem;
+      }
+
+      .controlButtons {
+        flex-direction: column; /* Stack buttons vertically */
+        align-items: center; /* Center the buttons */
+      }
+
+      .controlButtons button {
+        width: 100%; /* Make buttons take full width */
+        max-width: 300px; /* Optional: Limit the maximum width */
+        margin: 0.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content-section {
+        padding: 1rem;
+      }
+
+      .nav-buttons {
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        padding: 0.75rem;
+      }
+    }
