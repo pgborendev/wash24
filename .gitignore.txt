@@ -1,0 +1,16 @@
+# Ignore specific file
+config.ini
+
+# Ignore entire directory
+wash24-admin/node_modules/
+wash24-admin/package-lock.json
+wash24-api/node_modules/
+wash24-api/package-lock.json
+dist/
+
+# Ignore all files with extension
+*.log
+*.tmp
+
+# Ignore but keep empty directory
+!.gitkeep
