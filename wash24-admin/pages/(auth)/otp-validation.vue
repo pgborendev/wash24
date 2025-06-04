@@ -1,7 +1,8 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: 'blank',
-})
+  import OtpVerification from '~/components/auth/OtpVerification.vue';
+  definePageMeta({
+    layout: 'blank',
+  })
 </script>
 
 <template>
@@ -13,18 +14,15 @@ definePageMeta({
       <Card>
         <CardHeader class="text-center">
           <CardTitle class="text-xl">
-            Forgot Password
+            OTP Verification
           </CardTitle>
           <CardDescription>
-            Enter your email or phonenumber to reset your password.
+            Input the OTP sent to your email or phone number.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid mx-auto max-w-sm gap-6">
-            <AuthForgotPassword />
-            <NuxtLink to="/login" class="w-full text-center" >
-              Return to Login.
-            </NuxtLink>
+              <OtpVerification />
           </div>
         </CardContent>
       </Card>

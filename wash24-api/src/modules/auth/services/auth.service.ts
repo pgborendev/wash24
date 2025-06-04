@@ -1,25 +1,22 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
-import { DeviceType, SystemType } from "../enums/auth.enums";
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { TokenService } from "./token.service";
-
 import { v4 as uuidv4 } from 'uuid';
-
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 import { UserService } from "../../identity/services/user.service";
-import { User } from "../../identity/schemas/user.schema";
+import { SystemType, DeviceType, TokenType } from '../enums/auth.enums';
+import { OtpService } from '../services/otp.service';
 
 @Injectable()
 export class AuthService {
-
     private readonly logger = new Logger(AuthService.name);
 
     constructor(
         private readonly jwtService: JwtService,
         private readonly tokenService: TokenService,
-        private readonly configService: ConfigService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly otpService: OtpService,
     ) {}
 
     async validateSystemDevice(systemType: SystemType, deviceType: DeviceType): Promise<boolean> {
@@ -33,9 +30,23 @@ export class AuthService {
         return validCombinations[systemType]?.includes(deviceType) ?? false;
     }
 
+    private async assertValidSystemDevice(systemType: SystemType, deviceType: DeviceType, ipAddress: string, userAgent: string) {
+        if (!await this.validateSystemDevice(systemType, deviceType)) {
+            this.logger.warn({
+                event: 'AUTH_FAILURE',
+                message: 'Invalid system-device combination',
+                systemType,
+                deviceType,
+                ipAddress,
+                userAgent
+            });
+            throw new BadRequestException('Invalid system-device combination');
+        }
+    }
+
     async signOut(accessToken: string) {
         const startTime = Date.now();
-        const correlationId =  uuidv4();
+        const correlationId = uuidv4();
         this.logger.debug(`[${correlationId}] Sign-out started - AccessToken:${accessToken}`);
 
         try {
@@ -43,15 +54,14 @@ export class AuthService {
             const token = await this.tokenService.findTokenByJti(decoded.jti);
 
             if (!token) {
-                throw new BadRequestException({ error: 401, message: 'Invalid access token'});
+                throw new BadRequestException({ error: 401, message: 'Invalid access token' });
             }
             if (token.isRevoked) {
-                throw new BadRequestException({error: 402, message: 'This accesstoken has been revoked'});
+                throw new BadRequestException({ error: 402, message: 'This accesstoken has been revoked' });
             }
             await this.tokenService.revokeToken(token.jti);
             return { message: 'User signed out successfully' };
-        }
-        catch (error: any) {
+        } catch (error: any) {
             this.logger.error({
                 message: 'Sign-out failed',
                 error: {
@@ -59,46 +69,25 @@ export class AuthService {
                     message: error.message,
                     stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
                 },
-                input: {
-                    accessToken
-                },
+                input: { accessToken },
                 correlationId
             });
             throw error;
-        }
-        finally {
+        } finally {
             const endTime = Date.now();
             const duration = endTime - startTime;
             this.logger.debug(`[${correlationId}] Sign-out completed - Duration: ${duration}ms`);
         }
-
-        
     }
 
-    // @Throttle({ default: { limit: 5, ttl: 60 } })
     async refresh(data: any) {
-
         const startTime = Date.now();
-        const correlationId =  uuidv4();
+        const correlationId = uuidv4();
         this.logger.debug(`[${correlationId}] Refresh token started - RefreshToken:${data.refreshToken}`);
+
         try {
             this.logger.debug({
-            message: 'Refreshing token',
-            refreshToken: data.refreshToken,
-            systemType: data.systemType,
-            deviceType: data.deviceType,
-            deviceId: data.deviceId,
-            ipAddress: data.ipAddress,
-            userAgent: data.userAgent
-        });
-
-        const decoded = await this.jwtService.verifyAsync(data.refreshToken);        
-        const token = await this.tokenService.findTokenByJti(decoded.jti);
-
-        if (!token) {
-            this.logger.warn({
-                event: 'AUTH_FAILURE',
-                message: 'Invalid refresh token',
+                message: 'Refreshing token',
                 refreshToken: data.refreshToken,
                 systemType: data.systemType,
                 deviceType: data.deviceType,
@@ -106,69 +95,80 @@ export class AuthService {
                 ipAddress: data.ipAddress,
                 userAgent: data.userAgent
             });
-            throw new BadRequestException({ error: 401, message: 'Invalid refresh token'});
-        }
-        
-        if (token.isRevoked) {
-            this.logger.warn({
-                event: 'AUTH_FAILURE',
-                message: 'This refresh token has been revoked',
-                refreshToken: data.refreshToken,
+
+            const decoded = await this.jwtService.verifyAsync(data.refreshToken);
+            const token = await this.tokenService.findTokenByJti(decoded.jti);
+
+            if (!token) {
+                this.logger.warn({
+                    event: 'AUTH_FAILURE',
+                    message: 'Invalid refresh token',
+                    refreshToken: data.refreshToken,
+                    systemType: data.systemType,
+                    deviceType: data.deviceType,
+                    deviceId: data.deviceId,
+                    ipAddress: data.ipAddress,
+                    userAgent: data.userAgent
+                });
+                throw new BadRequestException({ error: 401, message: 'Invalid refresh token' });
+            }
+
+            if (token.isRevoked) {
+                this.logger.warn({
+                    event: 'AUTH_FAILURE',
+                    message: 'This refresh token has been revoked',
+                    refreshToken: data.refreshToken,
+                    systemType: data.systemType,
+                    deviceType: data.deviceType,
+                    deviceId: data.deviceId,
+                    ipAddress: data.ipAddress,
+                    userAgent: data.userAgent
+                });
+                throw new BadRequestException({ error: 402, message: 'This refreshtoken has been revoked' });
+            }
+
+            const user = await this.userService.get(decoded.userId);
+            if (!user) {
+                this.logger.warn({
+                    event: 'AUTH_FAILURE',
+                    message: 'User not found',
+                    userId: decoded.userId
+                });
+                throw new BadRequestException({ error: 403, message: 'Invalid user id' });
+            }
+
+            await this.assertValidSystemDevice(
+                data.systemType,
+                data.deviceType,
+                data.ipAddress,
+                data.userAgent
+            );
+
+            await this.tokenService.revokeToken(token.jti);
+            this.logger.log({
+                message: 'Token revoked',
+                jti: token.jti,
+            });
+
+            this.logger.debug({
+                message: 'Creating new user token',
+                userId: user.id,
                 systemType: data.systemType,
                 deviceType: data.deviceType,
                 deviceId: data.deviceId,
                 ipAddress: data.ipAddress,
                 userAgent: data.userAgent
             });
-            throw new BadRequestException({error: 402, message: 'This refreshtoken has been revoked'});
-        }
 
-        const user = await this.userService.get(decoded.userId);
-        if (!user) {
-            this.logger.warn({
-                event: 'AUTH_FAILURE',
-                message: 'User not found',
-                userId: decoded.userId
-            });
-            throw new BadRequestException({ error: 403, message: 'Invalid user id'});
-        }
-
-        if (!await this.validateSystemDevice(data.systemType, data.deviceType)) {
-            this.logger.warn({
-                event: 'AUTH_FAILURE',
-                message: 'Invalid system-device combination',
-                systemType: data.systemType,
-                deviceType: data.deviceType
-            });
-            throw new BadRequestException('Invalid system-device combination');
-        }
-
-        await this.tokenService.revokeToken(token.jti);
-        this.logger.log({
-            message: 'Token revoked',
-            jti: token.jti,
-        });
-
-        this.logger.debug({
-            message: 'Creating new user token',
-            userId: user.id,
-            systemType: data.systemType,
-            deviceType: data.deviceType,
-            deviceId: data.deviceId,
-            ipAddress: data.ipAddress,
-            userAgent: data.userAgent
-        });
-        return await this.createUserToken(
-            user,
-            data.systemType,
-            data.deviceType,
-            data.deviceId,
-            data.ipAddress,
-            data.userAgent
-        );
-
-        }
-        catch (error: any) {
+            return await this.tokenService.createAuthenticationToken(
+                user,
+                data.systemType,
+                data.deviceType,
+                data.deviceId,
+                data.ipAddress,
+                data.userAgent
+            );
+        } catch (error: any) {
             this.logger.error({
                 message: 'Refresh token failed',
                 error: {
@@ -182,8 +182,7 @@ export class AuthService {
                 }
             });
             throw error;
-        }
-        finally {
+        } finally {
             const endTime = Date.now();
             const duration = endTime - startTime;
             this.logger.debug(`[${correlationId}] Refresh token completed - Duration: ${duration}ms`);
@@ -212,45 +211,28 @@ export class AuthService {
                 });
             }
 
-            // Determine identifier type and find user
-            let user;
-            if (data.identifier.includes('@')) {
-                // Email login
-                this.logger.debug(`[${correlationId}] Attempting email login`);
-                user = await this.userService.findByEmail(data.identifier.toLowerCase().trim());
-            } else if (/^\+?[0-9\s\-]+$/.test(data.identifier)) {
-                // Phone login
-                const phone = data.identifier.replace(/[^0-9+]/g, '');
-                this.logger.debug(`[${correlationId}] Attempting phone login: ${phone}`);
-                user = await this.userService.findByPhone(phone);
-            } else {
-                // Username login
-                this.logger.debug(`[${correlationId}] Attempting username login`);
-                user = await this.userService.findByUsername(data.identifier.toLowerCase().trim());
-            }
+            const user = await this.getUser(data.identifier);
 
             if (!user) {
-                this.logger.warn({
-                    event: 'AUTH_FAILURE',
-                    message: 'User not found',
-                    identifier: data.identifier,
-                    identifierType: data.identifier.includes('@') ? 'email' : 
-                                /^\+?[0-9\s\-]+$/.test(data.identifier) ? 'phone' : 'username',
-                    ip: data.ipAddress,
-                    userAgent: data.userAgent,
-                    correlationId
-                });
-                throw new BadRequestException({
-                    error: 404,
-                    message: 'User not found.',
-                });
-            }
+            this.logger.warn({
+                event: 'AUTH_FAILURE',
+                message: 'User not found',
+                identifier: data.identifier,
+                ip: data.ipAddress,
+                userAgent: data.userAgent,
+                correlationId
+            });
+            throw new BadRequestException({
+                error: 404,
+                message: 'Could not find account with this username.',
+            });
+        }
 
             const passwordIsValid = await bcrypt.compare(data.password, user.password);
             if (!passwordIsValid) {
                 this.logger.warn({
                     event: 'AUTH_FAILURE',
-                    message: 'Invalid password',
+                    message: 'Incorrect password',
                     userId: user.id,
                     identifier: data.identifier,
                     ip: data.ipAddress,
@@ -259,21 +241,28 @@ export class AuthService {
                 });
                 throw new BadRequestException({
                     error: 401,
-                    message: 'Invalid credentials',
+                    message: 'Incorrect password. Please try again.',
                 });
             }
+
+            await this.assertValidSystemDevice(
+                data.systemType,
+                data.deviceType,
+                data.ipAddress,
+                data.userAgent
+            );
 
             this.logger.log({
                 message: 'User signed in',
                 userId: user.id,
-                identifierType: data.identifier.includes('@') ? 'email' : 
-                            /^\+?[0-9\s\-]+$/.test(data.identifier) ? 'phone' : 'username',
+                identifierType: data.identifier.includes('@') ? 'email' :
+                    /^\+?[0-9\s\-]+$/.test(data.identifier) ? 'phone' : 'username',
                 deviceType: data.deviceType,
                 systemType: data.systemType,
                 correlationId
             });
 
-            return await this.createUserToken(
+            return await this.tokenService.createAuthenticationToken(
                 user,
                 data.systemType,
                 data.deviceType,
@@ -302,101 +291,123 @@ export class AuthService {
             this.logger.debug(`[${correlationId}] Sign-in completed - Duration: ${duration}ms`);
         }
     }
-    
-    async createUserToken(
-        user: User,
-        systemType: SystemType,
-        deviceType: DeviceType,
-        deviceId: string,
-        ipAddress: string,
-        userAgent: string) {
 
-        this.logger.debug({
-            message: 'Creating user token', 
-            userId: user.id,
-            systemType,
-            deviceType,
-            deviceId,
-            ipAddress,
-            userAgent
-        });
+    async requestToChangePassword(data:any) {
 
-
-        if (!await this.validateSystemDevice(systemType, deviceType)) {
+        if (!data.username ) {
             this.logger.warn({
-                event: 'AUTH_FAILURE',
-                message: 'Invalid system-device combination',
-                systemType,
-                deviceType,
-                ipAddress,
-                userAgent
+                event: 'CHANGE_PASSWORD_REQUEST',
+                message: 'username not provided'
             });
-            throw new BadRequestException('Invalid system-device combination');
+            throw new BadRequestException({
+                error: 400,
+                message: ' username are required.',
+            });
         }
 
-        const authorities: string[] = user.roles.map((role: any) => role.name);
+        const user = await this.getUser(data.username);
+        if (!user) {
+            this.logger.warn({
+                event: 'CHANGE_PASSWORD_REQUEST',
+                message: 'User not found',
+                identifier: data.identity
+            });
+            throw new BadRequestException({
+                error: 404,
+                message: 'Could not find account with this username.',
+            });
+        }
 
-        const payload = {
-            userId: user.id,
-            username: user.username,
-            roles: authorities,
-            jti: uuidv4(),
-            systemType,
-            deviceId
-        };
-
-        const parseExpiresIn = (expiresIn: string) => {
-        if (/^\d+$/.test(expiresIn)) return parseInt(expiresIn, 10);
-        if (expiresIn.endsWith('d')) return parseInt(expiresIn) * 86400;
-        if (expiresIn.endsWith('h')) return parseInt(expiresIn) * 3600;
-        if (expiresIn.endsWith('m')) return parseInt(expiresIn) * 60;
-        return 86400; // default 1 day
-        };
-
-        const accessTokenExpiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '1d');
-        const refreshTokenExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '15d');
-
-        const newAccessToken = this.jwtService.sign(payload, {expiresIn: accessTokenExpiresIn});
-        const newRefreshToken = this.jwtService.sign(payload, {expiresIn: refreshTokenExpiresIn});
-
-        this.logger.debug({
-            message: 'Tokens generated',
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken
-        });
-
-        await this.tokenService.createToken({
-            jti: payload.jti,
-            userId: user.id,
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            isRevoked: false,
-            systemType: systemType,
-            deviceType: deviceType,
-            deviceId: deviceId,
-            ipAddress: ipAddress,
-            userAgent: userAgent,
-        });
-
-        this.logger.debug({
-            message: 'Token saved to database',
-            jti: payload.jti,
-            userId: user.id,
-            systemType,
-            deviceType,
-            deviceId,
-            ipAddress,
-            userAgent
-        });
-
-        return {
-            jti: payload.jti,
-            userId: user._id,
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            accessTokenExpires: parseExpiresIn(accessTokenExpiresIn),
-            refreshTokenExpires: parseExpiresIn(refreshTokenExpiresIn)
-        };
-
+        await this.otpService.createOtp(data.username);
+        return await this.tokenService.createOTPToken(
+        user,
+        data.systemType,
+        data.deviceType,
+        data.deviceId,
+        data.ipAddress,
+        data.userAgent,
+        TokenType.FORGET_PASSWORD_REQUEST
+        );
     }
+
+    async validateOtp(data: any) {
+
+        // if (tokenRecord.type == TokenType.FORGET_PASSWORD_REQUEST || tokenRecord.type == TokenType.OTP_VALIDATION) {
+        //     this.tokenService.revokeToken(payload.jti);
+        // }
+
+        if (!data.username ) {
+            throw new BadRequestException({
+                error: 400,
+                message: 'Identifier are required.',
+            });
+        }
+
+        if (!data.otp ) {
+            throw new BadRequestException({
+                error: 400,
+                message: 'Identifier are required.',
+            });
+        }
+
+        const user = await this.getUser(data.username);
+        if (!user) {
+            this.logger.warn({
+                event: 'GET_USER_FAILURE',
+                message: 'User not found',
+                identifier: data.identity
+            });
+            throw new BadRequestException({
+                error: 404,
+                message: 'Could not find account with this username.',
+            });
+        }
+
+        const isValidOtp = await this.otpService.isValidOtp(data.username, data.otp);
+        if (!isValidOtp) {
+             this.logger.warn({
+                event: 'OTP_VALIDATION',
+                message: 'Incorect otp value.',
+                identifier: data.identity
+            });
+            throw new BadRequestException({
+                error: 404,
+                message: 'Invalid otp validation data.',
+            });
+        }
+
+        return await this.tokenService.createOTPToken(
+            user,
+            data.systemType,
+            data.deviceType,
+            data.deviceId,
+            data.ipAddress,
+            data.userAgent,
+            TokenType.OTP_VALIDATION);
+    }
+
+    async changePassword(data: any) {
+        const username = data.username;
+        const password = data.password;
+        const user = await this.getUser(username);
+        if (!user) {
+            this.logger.warn({
+                event: 'CHANGE_USER_PASSWORD_FAILURE',
+                message: 'User not found',
+                identifier: data.username
+            });
+            throw new BadRequestException({
+                error: 404,
+                message: 'Could not find account with this username.',
+            });
+        }
+        await this.userService.updateUserPassword(user.id, password);
+    }
+
+    async getUser(identity: string) {
+        const correlationId = uuidv4();
+        this.logger.debug(`[${correlationId}] Attempting username login`);
+        return await this.userService.findByUsername(identity.toLowerCase().trim());
+    }
+
 }

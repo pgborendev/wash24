@@ -3,12 +3,16 @@ import { Controller, Post, Get, Param, Req, Res, UseGuards, BadRequestException 
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../services/auth.service';
 import AuthGuard from '../guards/jwt.auth-guard';
+import { OtpService } from '../services/otp.service';
+import { TokenService } from '../services/token.service';
 
 @Controller('/api/auth')
 class AuthController {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly otpService: OtpService,
+    private readonly tokenService: TokenService,
   ) {}
 
   private extractToken(request: Request): string | null {
@@ -24,14 +28,61 @@ class AuthController {
     return;
   }
 
-  @Get('verify/:token')
-  public async verify(@Param('token') token: string, @Res() res: Response): Promise<void> {
+  @Post('forget_password_request')
+  async forgetPasswordRequest(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {
-      const decoded = await this.jwtService.verifyAsync(token);
-      res.json({ message: 'Token is valid', decoded });
+      const token = await this.authService.requestToChangePassword(req.body)
+      res.status(200).json({ message: 'Change request is successfully', token: token.accessToken }); 
+      return;
     } catch (err) {
-      res.status(500).json({ error: 'Error verifying token' });
+      if (err instanceof BadRequestException) {
+        res.status(400).send(err.getResponse());
+        return;
+      }
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
     }
+  }
+
+  @Post('validate_otp')
+  @UseGuards(AuthGuard)
+  async validateotp(@Req() req: Request, @Res() res: Response): Promise<void> {
+    try {
+      const token:any = await this.authService.validateOtp(req.body);
+      const payload = (req as any).payload;
+      if (payload) {
+          await this.tokenService.revokeToken(payload.jti);
+      }
+      res.status(200).json({ message: 'OTP validate successfully', token: token.accessToken }); 
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        res.status(400).send(err.getResponse());
+        return;
+      }
+      res.status(500).json({ error: 'Error verifying token' });
+      return;
+    }    
+  }
+
+  @Post('update_user_password')
+  @UseGuards(AuthGuard)
+  async changePassword(@Req() req: Request, @Res() res: Response): Promise<void> {
+    try {
+      await this.authService.changePassword(req.body);
+      const payload = (req as any).payload;
+      if (payload) {
+          await this.tokenService.revokeToken(payload.jti);
+      }
+      res.status(200).json({ message: 'User password is changed successfully.'}); 
+      return;
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        res.status(400).send(err.getResponse());
+        return;
+      }
+      res.status(500).json({ error: 'Error change user password.' });
+      return;
+    }    
   }
 
   @Get('signout')
@@ -92,7 +143,7 @@ class AuthController {
   async signin(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {      
     console.log('Received signin request:', req.body);
-    const data =  { username: req.body.username,
+    const data =  { identifier: req.body.identifier,
       password: req.body.password,
       systemType: req.body.system,
       deviceType: req.body.deviceType,
@@ -102,7 +153,7 @@ class AuthController {
         : Array.isArray(req.headers['x-forwarded-for'])
           ? req.headers['x-forwarded-for'][0]
           : req.socket.remoteAddress) || '',
-       userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : ''};
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : ''};
       const token = await this.authService.signIn(data);
       res.status(200).send(token);
     } catch (error) {

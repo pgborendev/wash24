@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useSidebar } from '~/components/ui/sidebar'
 
+const { logout } = useAuth()
+
 defineProps<{
   user: {
     name: string
@@ -12,7 +14,7 @@ defineProps<{
 const { isMobile, setOpenMobile } = useSidebar()
 
 function handleLogout() {
-  navigateTo('/login')
+  logout();
 }
 
 const showModalTheme = ref(false)

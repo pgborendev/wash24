@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import { JwtService } from '@nestjs/jwt';
 import { TokenService } from '../services/token.service';
 import { Request } from 'express';
+import { TokenType } from '../enums/auth.enums';
 
 @Injectable()
 export default class AuthGuard implements CanActivate {
@@ -35,8 +36,7 @@ export default class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid access token');
       }
 
-      // 3️⃣ Attach user to request
-      request.user = payload;
+      request.payload = payload;
       return true;
       
     } catch (error: any) {

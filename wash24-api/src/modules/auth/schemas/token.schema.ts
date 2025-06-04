@@ -41,6 +41,9 @@ export class Token extends Document {
   @Prop()
   location?: string;
 
+  @Prop()
+  type?: string;
+
 }
 
 export const TokenSchema = SchemaFactory.createForClass(Token);

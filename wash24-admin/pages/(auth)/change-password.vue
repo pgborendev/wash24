@@ -1,7 +1,7 @@
 <script setup lang="ts">
-definePageMeta({
-  layout: 'blank',
-})
+  definePageMeta({
+    layout: 'blank',
+  })
 </script>
 
 <template>
@@ -13,18 +13,15 @@ definePageMeta({
       <Card>
         <CardHeader class="text-center">
           <CardTitle class="text-xl">
-            Forgot Password
+            Change Password
           </CardTitle>
           <CardDescription>
-            Enter your email or phonenumber to reset your password.
+            Please enter your new password below.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid mx-auto max-w-sm gap-6">
-            <AuthForgotPassword />
-            <NuxtLink to="/login" class="w-full text-center" >
-              Return to Login.
-            </NuxtLink>
+              <AuthChangePassword/>
           </div>
         </CardContent>
       </Card>

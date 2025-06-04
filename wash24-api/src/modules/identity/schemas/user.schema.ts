@@ -88,6 +88,22 @@ UserSchema.pre<User>('save', async function (next) {
   }
 });
 
+// Add this to user.schema.ts
+UserSchema.pre('findOneAndUpdate', async function (next) {
+  const update = this.getUpdate() as any;
+  if (update.password) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      update.password = await bcrypt.hash(update.password, salt);
+      next();
+    } catch (err) {
+      next(err as import('mongoose').CallbackError);
+    }
+  } else {
+    next();
+  }
+});
+
 // Add any virtuals or methods here if needed
 UserSchema.methods.comparePassword = async function (candidatePassword: string) {
   return bcrypt.compare(candidatePassword, this.password);

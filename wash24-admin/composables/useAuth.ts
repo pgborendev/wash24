@@ -1,36 +1,37 @@
 
-interface User {
-  id: number;
-  username: string;
-  // Add other user properties as needed
-}
+  interface User {
+    id: number;
+    username: string;
+    // Add other user properties as needed
+  }
 
-interface LoginPayload {
-  username: string;
-  password: string;
-  system: string;
-  deviceType: string;
-  deviceId: string;
-}
+  interface LoginPayload {
+    identifier: string;
+    password: string;
+    system: string;
+    deviceType: string;
+    deviceId: string;
+  }
 
-interface AuthResponse {
-  userId: string;
-  accessToken: string;
-  refreshToken: string;
-  jti: string;
-  accessTokenExpires?: number;
-  refreshTokenExpires?: number;
-}
+  interface AuthResponse {
+    userId: string;
+    accessToken: string;
+    refreshToken: string;
+    jti: string;
+    accessTokenExpires?: number;
+    refreshTokenExpires?: number;
+  }
 
   export const useAuth = () => {
-
   
   const userId = useState<string>('userId', () => '');
   const accessToken = useState<string>('accessToken', () => '');
   const refreshToken = useState<string>('refreshToken', () => '');
+  const resetToken = useState<string>('resetToken', () => '');
   const jti  = useState<string>('jti', () => '');
   
   const isAuthenticated = computed(() => !!accessToken.value);
+  const isResestAuthenticated = computed(() => !!resetToken.value);
   const config = useRuntimeConfig();
 
   const apiFetch = $fetch.create({
@@ -39,6 +40,53 @@ interface AuthResponse {
       'Content-Type': 'application/json'
     },
   });
+
+  const sendForgetPasswordRequest = async (username: string) => {
+    try {
+      const data = await apiFetch('/auth/forget_password_request', {
+          method: 'POST',
+          body: {username: username}
+      });
+      return data;
+    }
+    catch(error: any) {
+      throw new Error(error.data?.message || 'Generation failed');
+    }
+  }
+
+  const validateOtp = async (username: string, otp: string, token: string) => {
+    try {
+      const data = await apiFetch('/auth/validate_otp', {
+          method: 'POST',
+           headers: {
+              'Authorization': `Bearer ${token}`
+            },
+          body: {username: username, otp: otp}
+      });
+      return data;
+    }
+    catch(error: any) {
+      throw new Error(error.data?.message || 'Generation failed');
+    }
+  }
+
+  const updateUserPassword = async (username: string, password: string, token: string) => {
+    try {
+      console.log(token);
+      const data = await apiFetch('/auth/update_user_password', {
+          method: 'POST',
+           headers: {
+              'Authorization': `Bearer ${token}`
+            },
+          body: {username: username, password: password}
+      });
+      return data;
+    }
+    catch(error: any) {
+      throw new Error(error.data?.message || 'Password Change failed');
+    }
+  }
+
 
   const login = async (payload: LoginPayload) => {
     try {
@@ -80,11 +128,12 @@ interface AuthResponse {
   
   const logout = async () => {
     try {
-      await $fetch('/auth/logout', {
-        method: 'POST',
+      await $fetch('/auth/signout', {
+        method: 'GET',
         baseURL: config.public.apiBaseUrl,
-        // @ts-ignore
-        agent: getAgent()
+        headers: {
+          'Authorization': `Bearer ${accessToken.value}`
+        }
       });
     } finally {
       userId.value = '';
@@ -130,6 +179,9 @@ interface AuthResponse {
     isAuthenticated,
     login,
     logout,
-    initAuth
+    initAuth,
+    sendForgetPasswordRequest,
+    validateOtp,
+    updateUserPassword
   };
 };

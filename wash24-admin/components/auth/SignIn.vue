@@ -2,8 +2,8 @@
 import { Loader2 } from 'lucide-vue-next'
 import PasswordInput from '~/components/PasswordInput.vue'
 
-const username = ref('admin')
-const password = ref('adminadmin')
+const username = ref('')
+const password = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 
@@ -22,11 +22,11 @@ async function onSubmit(event: Event) {
 
   try {
     await login({
-      username: username.value,
+      identifier: username.value,
       password: password.value,
       system: 'WASH24_WEB_POS',
       deviceType: 'DESKTOP',
-      deviceId: 'device123' // You might want to generate this dynamically
+      deviceId: 'device123' // should be use secret key that reconinzed and
     })
     await navigateTo('/')
   } catch (error: any) {
@@ -44,12 +44,12 @@ async function onSubmit(event: Event) {
     </div>
     
     <div class="grid gap-2">
-      <Label for="username">Username</Label>
+      <Label for="username">User ID</Label>
       <Input
         id="username"
         v-model="username"
         type="text"
-        placeholder="Enter username"
+        placeholder="Enter username, email, phone number"
         :disabled="isLoading"
         auto-complete="username"
       />
@@ -68,5 +68,9 @@ async function onSubmit(event: Event) {
       <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
       Login
     </Button>
+
+    <NuxtLink to="/forgot-password" class="w-full text-center" >
+        Forgot Password?
+    </NuxtLink>
   </form>
 </template>

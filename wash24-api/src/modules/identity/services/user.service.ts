@@ -37,6 +37,14 @@ class UserService extends BaseService<User> {
           .exec();
     }
 
+    async updateUserPassword(userId: string, newPassword: string): Promise<User | null> {
+      return this.model.findByIdAndUpdate(
+      userId,
+      { password: newPassword },
+      { new: true }
+      ).exec();
+    }
+
     public async checkEmailExists(email: string, id: string | undefined): Promise<boolean> {
 
       interface QueryType {

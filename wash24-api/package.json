@@ -21,6 +21,9 @@
     "seed": "ts-node src/modules/seed/seed.runner.ts"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "@emailjs/nodejs": "^5.0.2",
+    "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -31,9 +34,12 @@
     "bcryptjs": "^3.0.2",
     "class-validator": "^0.14.2",
     "express": "^5.1.0",
+    "googleapis": "^149.0.0",
+    "handlebars": "^4.7.8",
     "mongoose": "^8.15.0",
     "mongoose-paginate-v2": "^1.9.0",
     "nestjs-console": "^10.0.0",
+    "nodemailer": "^7.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uuid": "^11.1.0"

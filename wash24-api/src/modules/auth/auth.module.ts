@@ -10,6 +10,9 @@ import AuthController from './controllers/auth.controller';
 import AuthGuard from './guards/jwt.auth-guard';
 import { RoleGuard } from './guards/role.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { OtpService } from './services/otp.service';
+import { OTP, OTPSchema } from './schemas/otp.schema';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -24,12 +27,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           inject: [ConfigService],
         }),
   
-    MongooseModule.forFeature([{ name: Token.name, schema: TokenSchema }]),
-    forwardRef(() => IdentityModule),
+    MongooseModule.forFeature([
+      { name: Token.name, schema: TokenSchema },
+      { name: OTP.name, schema: OTPSchema },
+    ]),
+    forwardRef(() => IdentityModule), MailModule,
   ],
   controllers: [AuthController],
-  providers: [TokenService, AuthService, AuthGuard, RoleGuard],
-  exports: [AuthService, AuthGuard, RoleGuard, TokenService, JwtModule], // Export TokenService
+  providers: [TokenService, AuthService, AuthGuard, RoleGuard, OtpService],
+  exports: [AuthService, AuthGuard, RoleGuard, TokenService, OtpService, JwtModule], // Export TokenService
 })
 
 export class AuthModule {}
