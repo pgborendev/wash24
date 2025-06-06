@@ -18,6 +18,7 @@ export interface NavGroup {
 
 export interface NavMenu {
   heading: string
+  icon?: string
   items: NavMenuItems
 }
 

@@ -17,12 +17,13 @@ const activeTeam = ref(props.teams[0])
 <template>
   <SidebarMenu>
     <SidebarMenuItem>
+
+      
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <SidebarMenuButton
             size="lg"
-            class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-          >
+            class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
             <div class="aspect-square size-8 flex items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
               <Icon :name="activeTeam.logo" class="size-4" />
             </div>
@@ -38,8 +39,7 @@ const activeTeam = ref(props.teams[0])
         <DropdownMenuContent
           class="min-w-56 w-[--radix-dropdown-menu-trigger-width] rounded-lg"
           align="start"
-          :side="isMobile ? 'bottom' : 'right'"
-        >
+          :side="isMobile ? 'bottom' : 'right'">
           <DropdownMenuLabel class="text-xs text-muted-foreground">
             Teams
           </DropdownMenuLabel>
@@ -47,8 +47,7 @@ const activeTeam = ref(props.teams[0])
             v-for="(team, index) in teams"
             :key="team.name"
             class="gap-2 p-2"
-            @click="activeTeam = team"
-          >
+            @click="activeTeam = team">
             <div class="size-6 flex items-center justify-center border rounded-sm">
               <Icon :name="team.logo" class="size-4 shrink-0" />
             </div>

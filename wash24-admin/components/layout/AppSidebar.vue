@@ -42,6 +42,7 @@ const user: {
 }
 
 const { sidebar } = useAppSettings()
+
 </script>
 
 <template>
