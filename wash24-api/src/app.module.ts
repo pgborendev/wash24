@@ -8,6 +8,7 @@ import { IdentityModule } from './modules/identity/identity.module';
 import { SeedService } from './modules/seed/seed.service';
 import { BusinessModule } from './modules/bussiness/business.module';
 import { MailModule } from './modules/mail/mail.module';
+import { FileuploadModule } from './modules/fileupload/fileupload.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MailModule } from './modules/mail/mail.module';
     IdentityModule,
     BusinessModule,
     MailModule,
+    FileuploadModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeedService],
