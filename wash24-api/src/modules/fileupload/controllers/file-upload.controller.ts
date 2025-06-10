@@ -1,10 +1,10 @@
-import { Controller, Post, UploadedFile, UseInterceptors, Delete, Param } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Post, UploadedFile, UseInterceptors, Delete, Param, UploadedFiles } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { FileUploadService } from '../services/fileupload.service'; 
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
-@Controller('files')
+@Controller('/api/files')
 export class FileUploadController {
   constructor(private readonly fileUploadService: FileUploadService) {}
 
@@ -14,6 +14,17 @@ export class FileUploadController {
     return {
       url: await this.fileUploadService.saveFile(file),
     };
+  }
+
+  @Post('multiple')
+  @UseInterceptors(FilesInterceptor('files'))
+  async uploadMultipleFiles(
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const urls = await Promise.all(
+      files.map(file => this.fileUploadService.saveFile(file)),
+    );
+    return { urls };
   }
 
   @Delete(':path')

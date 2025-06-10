@@ -5,25 +5,36 @@ import { Express } from 'express';
 
 @Injectable()
 export class FileUploadService {
-  private readonly uploadDir = join(process.cwd(), 'public', 'uploads');
+  // Points to your project root's public folder (not dist)
+  private readonly publicDir = join(process.cwd(), 'public');
+  private readonly uploadsDir = join(this.publicDir, 'uploads');
 
-  async saveFile(file: Express.Multer.File): Promise<string> {
-    await ensureDir(this.uploadDir);
+  async saveFile(file: Express.Multer.File, subfolder = ''): Promise<string> {
+    const targetDir = subfolder ? 
+      join(this.uploadsDir, subfolder) : 
+      this.uploadsDir;
+
+    await ensureDir(targetDir);
     
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${this.getFileExtension(file.originalname)}`;
-    const filePath = join(this.uploadDir, uniqueName);
+    const uniqueName = this.generateUniqueFilename(file.originalname);
+    const filePath = join(targetDir, uniqueName);
     
     await writeFile(filePath, file.buffer);
     
-    return `/uploads/${uniqueName}`;
+    return `/public/uploads/${subfolder ? subfolder + '/' : ''}${uniqueName}`;
   }
 
-  async deleteFile(filePath: string): Promise<void> {
-    const fullPath = join(process.cwd(), 'public', filePath);
+  async deleteFile(publicUrl: string): Promise<void> {
+    // Remove '/public' prefix and leading slash if present
+    const relativePath = publicUrl.replace(/^\/?public\//, '');
+    const fullPath = join(this.publicDir, relativePath);
     await remove(fullPath);
   }
 
-  private getFileExtension(filename: string): string {
-    return filename.substring(filename.lastIndexOf('.'));
+  private generateUniqueFilename(originalname: string): string {
+    const ext = originalname.substring(originalname.lastIndexOf('.'));
+    const timestamp = Date.now();
+    const random = Math.round(Math.random() * 1e9);
+    return `${timestamp}-${random}${ext}`;
   }
 }

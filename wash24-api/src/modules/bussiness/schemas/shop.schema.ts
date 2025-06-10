@@ -29,6 +29,9 @@ export class Shop extends Document {
       @Prop({ type: String, required: true})
       bakongId: string;
 
+      @Prop({ type: String, required: false })
+      logo: string; 
+
       @Prop({ 
           type: Types.ObjectId, 
           required: true,

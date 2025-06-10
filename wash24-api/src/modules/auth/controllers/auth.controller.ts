@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Controller, Post, Get, Param, Req, Res, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Req, Res, UseGuards, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../services/auth.service';
 import AuthGuard from '../guards/jwt.auth-guard';
@@ -139,11 +139,16 @@ class AuthController {
       }
   }
 
-  @Post('signin')
-  async signin(@Req() req: Request, @Res() res: Response): Promise<void> {
-    try {      
+@Post('signin')
+async signin(
+  @Req() req: Request,
+  @Res({ passthrough: true }) res: Response
+): Promise<{ message: string }> {
+  try {
     console.log('Received signin request:', req.body);
-    const data =  { identifier: req.body.identifier,
+    
+    const data = {
+      username: req.body.username,
       password: req.body.password,
       systemType: req.body.system,
       deviceType: req.body.deviceType,
@@ -153,18 +158,54 @@ class AuthController {
         : Array.isArray(req.headers['x-forwarded-for'])
           ? req.headers['x-forwarded-for'][0]
           : req.socket.remoteAddress) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : ''};
-      const token = await this.authService.signIn(data);
-      res.status(200).send(token);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof BadRequestException) {
-        res.status(400).send(error.getResponse());
-        return;
-      }
-      res.status(500).send({ message: 'Internal Server Error' });
+      userAgent: typeof req.headers['user-agent'] === 'string' 
+        ? req.headers['user-agent'] 
+        : ''
+    };
+
+    const token = await this.authService.signIn(data);
+
+    // Set secure HttpOnly cookies
+    res.cookie('access_token', token.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: token.accessTokenExpires * 1000, // convert to milliseconds
+      path: '/',
+    });
+
+    res.cookie('refresh_token', token.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: token.refreshTokenExpires * 1000, // convert to milliseconds
+      path: '/auth/refresh', // Only sent to refresh endpoint
+    });
+
+    // Optionally set non-sensitive data in cookies if needed
+    res.cookie('user_id', token.userId, {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: token.accessTokenExpires * 1000,
+    });
+
+    return { message: 'Authentication successful' };
+
+  } catch (error) {
+    console.error(error);
+    
+    // Clear cookies on error
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+    res.clearCookie('user_id');
+
+    if (error instanceof BadRequestException) {
+      throw new BadRequestException(error.message);
     }
+    throw new InternalServerErrorException('Internal Server Error');
   }
+}
+
 }
 
 export default AuthController;

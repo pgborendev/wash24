@@ -197,7 +197,7 @@ export class AuthService {
         try {
             this.logger.debug(`[${correlationId}] Sign-in data: ${JSON.stringify(data)}`);
 
-            if (!data.identifier || !data.password) {
+            if (!data.username || !data.password) {
                 this.logger.warn({
                     event: 'AUTH_FAILURE',
                     message: 'Identifier or password not provided',
@@ -211,13 +211,13 @@ export class AuthService {
                 });
             }
 
-            const user = await this.getUser(data.identifier);
+            const user = await this.getUser(data.username);
 
             if (!user) {
             this.logger.warn({
                 event: 'AUTH_FAILURE',
                 message: 'User not found',
-                identifier: data.identifier,
+                identifier: data.username,
                 ip: data.ipAddress,
                 userAgent: data.userAgent,
                 correlationId
@@ -234,7 +234,7 @@ export class AuthService {
                     event: 'AUTH_FAILURE',
                     message: 'Incorrect password',
                     userId: user.id,
-                    identifier: data.identifier,
+                    identifier: data.username,
                     ip: data.ipAddress,
                     userAgent: data.userAgent,
                     correlationId
@@ -255,8 +255,8 @@ export class AuthService {
             this.logger.log({
                 message: 'User signed in',
                 userId: user.id,
-                identifierType: data.identifier.includes('@') ? 'email' :
-                    /^\+?[0-9\s\-]+$/.test(data.identifier) ? 'phone' : 'username',
+                identifierType: data.username.includes('@') ? 'email' :
+                    /^\+?[0-9\s\-]+$/.test(data.username) ? 'phone' : 'username',
                 deviceType: data.deviceType,
                 systemType: data.systemType,
                 correlationId
@@ -270,6 +270,8 @@ export class AuthService {
                 data.ipAddress,
                 data.userAgent
             );
+
+            
         } catch (error: any) {
             this.logger.error({
                 message: 'Sign-in failed',
@@ -279,7 +281,7 @@ export class AuthService {
                     stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
                 },
                 input: {
-                    identifier: data.identifier,
+                    identifier: data.username,
                     systemType: data.systemType
                 },
                 correlationId

@@ -18,7 +18,7 @@ import { Profile, ProfileSchema } from './schemas/profile.schema';
       { name: Role.name, schema: RoleSchema },
       { name: Profile.name, schema: ProfileSchema },
     ]),
-    forwardRef(() => AuthModule), // Break circular dependency
+    forwardRef(() => AuthModule), 
   ],
   controllers: [UserController, RoleController, ProfileController],
   providers: [UserService, RoleService, ProfileService],

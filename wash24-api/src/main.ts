@@ -5,6 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as fs from 'fs';
 import * as https from 'https';
+import { join } from 'path';
+const path = require('path'); // Add this at top
 
 async function bootstrap() {
   const port = process.env.API_PORT || 3000;
@@ -17,12 +19,7 @@ async function bootstrap() {
 
   const server = express();
   const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(server),
-    { 
-      httpsOptions, // Enable HTTPS directly in NestJS
-      cors: true // Enable CORS at NestJS level
-    }
+    AppModule, new ExpressAdapter(server), { httpsOptions, cors: true }
   );
 
   // Enhanced CORS configuration
@@ -36,8 +33,13 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization',
   });
 
-  // Global prefix for all routes
-  // app.setGlobalPrefix('api');
+  const publicDir = join(process.cwd(), 'public');
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+
+  // Serve static files from the correct location
+  app.use('/public', express.static(publicDir));
 
   await app.init();
   

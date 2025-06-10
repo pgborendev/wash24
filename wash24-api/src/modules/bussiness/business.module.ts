@@ -9,6 +9,7 @@ import { DeviceService } from './services/device.service';
 import { ItemService } from './services/item.service';
 import { Device, DeviceSchema } from './schemas/device.schema';
 import { Item, ItemSchema } from './schemas/item.schema';
+import { FileUploadService } from '../fileupload/services/fileupload.service';
 
 @Module({
   imports: [
@@ -19,9 +20,8 @@ import { Item, ItemSchema } from './schemas/item.schema';
     ]),
   ],
   controllers: [ShopController, DeviceController, ItemController],
-  providers: [ShopService, DeviceService, ItemService],
+  providers: [ShopService, DeviceService, ItemService, FileUploadService],
   exports: [ShopService, DeviceService, ItemService],
 })
-
 
 export class BusinessModule {}
