@@ -4,6 +4,11 @@ const apiEndpoints = {
   base:`${API_BASE_URL}`,
   auth: {
     signIn: `${API_BASE_URL}/auth/signin`,
+    checkAuth: `${API_BASE_URL}/auth/check`,
+    signOut: `${API_BASE_URL}/auth/signout`,
+    refresh: `${API_BASE_URL}/auth/refresh`,
+    forget_password_request: `${API_BASE_URL}/auth/forget_password_request`,
+    otp_verify: `${API_BASE_URL}/auth/otp_verify`,
   },
   view: {
     doc_list: `${API_BASE_URL}/api`,

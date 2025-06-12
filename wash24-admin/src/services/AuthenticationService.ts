@@ -1,6 +1,7 @@
 import type { ApiEndpoints } from '@/config/config';
 import { BaseService } from './BaseService';
 
+
 interface AuthPayload {
     username: string;
     password: string;
@@ -24,15 +25,43 @@ class AuthenticationService extends BaseService {
     super(apiEndpoints);
   }
 
+  forgotPassword(payload: any): Promise<void> {
+    return this.apiFetch<void>(this.apiEndpoints.auth.forget_password_request, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+  }
+
+    otpVerify(payload: any): Promise<void> {
+    return this.apiFetch<void>(this.apiEndpoints.auth.otp_verify, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+  }
+
+
+  signOut(): Promise<void> {
+    return this.apiFetch<void>(this.apiEndpoints.auth.signOut, {
+      method: 'GET',
+    });
+  }
+
+  checkAuth(): Promise<{ isAuthenticated: boolean; userId: string }> {
+    return this.apiFetch<{ isAuthenticated: boolean; userId: string }>(this.apiEndpoints.auth.checkAuth, {
+      method: 'GET',
+    });
+  }
+
   login(payload: any): Promise<AuthResponse> {
     return this.apiFetch<AuthResponse>(this.apiEndpoints.auth.signIn, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload
     });
-}
+  }
 
- 
 }
 
 export default AuthenticationService;

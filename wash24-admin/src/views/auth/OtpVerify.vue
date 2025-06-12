@@ -4,47 +4,35 @@ import CardHeader from '@/components/ui/card/CardHeader.vue';
 import CardTitle from '@/components/ui/card/CardTitle.vue';
 import CardDescription from '@/components/ui/card/CardDescription.vue';
 import CardContent from '@/components/ui/card/CardContent.vue';
-import { ref } from 'vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import Button from '@/components/ui/button/Button.vue';
-import Input from '@/components/ui/input/Input.vue';
-import CardFooter from '@/components/ui/card/CardFooter.vue';
-import { Loader2 } from 'lucide-vue-next';
-import { useRouter } from 'vue-router';
-import { useAuth } from '@/composables/useAuth';
 
-const router = useRouter();
-const username = ref('')
-const password = ref('')
-const isLoading = ref(false)
+import { ref } from 'vue';
+import Button from '@/components/ui/button/Button.vue';
+import CardFooter from '@/components/ui/card/CardFooter.vue';
+import { Loader2, Minus, UserRound } from 'lucide-vue-next';
+import { useAuth } from '@/composables/useAuth';
+import { useRouter } from 'vue-router';
+import PinInput from '@/components/ui/pin-input/PinInput.vue';
+import PinInputGroup from '@/components/ui/pin-input/PinInputGroup.vue';
+import PinInputSeparator from '@/components/ui/pin-input/PinInputSeparator.vue';
+import { PinInputSlot } from '@/components/ui/pin-input';
+
+const otps = ref<string[]>([])
 const errorMessage = ref('')
+const isLoading = ref(false)
 
 async function onSubmit(event: Event) {
   event.preventDefault()
-
-  if (!username.value || !password.value) {
-    errorMessage.value = 'Username and password are required'
-    return
-  }
-
   isLoading.value = true
   errorMessage.value = ''
   try {
-    await useAuth().signIn({
-      username: username.value,
-      password: password.value,
-      system: 'WASH24_WEB_POS',
-      deviceType: 'DESKTOP',
-      deviceId: 'device123' 
-    })
-    await router.push({ name: 'Dashboard' })
+    alert(otps.value.join(''));
+    isLoading.value = true
   } catch (error: any) {
-    errorMessage.value = error.message || 'Login failed. Please try again.'
+    errorMessage.value = error.message || 'OTP Validation failed. Please try again.'
   } finally {
     isLoading.value = false
   }
 }
-
 </script>
 
 <template>
@@ -59,40 +47,43 @@ async function onSubmit(event: Event) {
           <Card>
             <CardHeader class="text-center">
               <CardTitle class="text-xl">
-                Welcome back
+                OTP Verification
               </CardTitle>
               <CardDescription>
-                Login with your Wash24 Account
+                Enter otp send to your email.
               </CardDescription>
             </CardHeader>
             <CardContent>
-
-              <div v-if="errorMessage" class="text-sm font-medium text-destructive">
-                {{ errorMessage }}
-              </div>
-
-              <div class="grid gap-2">
-                <Label for="username">User ID</Label>
-                <Input id="username" v-model="username" type="text" placeholder="Enter username, email, phone number"
-                  :disabled="isLoading" auto-complete="username" />
-              </div>
-              <div class="grid gap-2">
-                <Label for="password">Password</Label>
-                <PasswordInput id="password" v-model="password" :disabled="isLoading" />
-              </div>
+                <PinInput
+                id="pin-input"
+                v-model="otps"
+                placeholder="○"
+                class="justify-center">
+              <PinInputGroup>
+                <template v-for="(id, index) in 5" :key="id">
+                  <PinInputSlot class="rounded-md border" :index="index"/>
+                  <template v-if="index !== 4">
+                    <PinInputSeparator>
+                      <Minus class="w-2"/>
+                    </PinInputSeparator>
+                  </template>
+                </template>
+              </PinInputGroup>
+            </PinInput>
             </CardContent>
             <CardFooter class="flex justify-between px-6 pb-6">
               <Button type="submit" variant="outline" class="w-full" :disabled="isLoading">
                 <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
-                Login
+                Submit
               </Button>
             </CardFooter>
           </Card>
           <div class="text-center text-balance text-muted-foreground [&_a]:hover:text-primary">
-            <router-link :to="{ name: 'ForgotPassword' }">Forgot Password?</router-link>
+            <router-link :to="{ name: 'LOGIN' }">Go Back</router-link>
           </div>
         </form>
       </div>
     </div>
   </div>
 </template>
+

@@ -29,6 +29,7 @@ export class BaseService {
       headers: {
         ...options.headers,
       },
+      credentials: 'include', // Required for cookies
       body: options.body ? JSON.stringify(options.body) : undefined,
     };
 

@@ -13,7 +13,7 @@ export default class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const token = this.extractToken(request);
+    const token = this.extractTokenFromCookies(request);
 
     if (!token) {
       throw new UnauthorizedException('Access token is required');
@@ -33,14 +33,19 @@ export default class AuthGuard implements CanActivate {
       }
 
       if (tokenRecord.isRevoked) {
-        throw new UnauthorizedException('Invalid access token');
+        throw new UnauthorizedException('Access token revoked');
       }
 
-      request.payload = payload;
+      // Attach payload to request
+      request.user = {
+        userId: payload.userId,
+        roles: payload.roles,
+        jti: payload.jti
+      };
+      
       return true;
       
     } catch (error: any) {
-      
       if (error.name === 'TokenExpiredError') {
         throw new UnauthorizedException('Token expired');
       }
@@ -56,8 +61,7 @@ export default class AuthGuard implements CanActivate {
     }
   }
 
-  private extractToken(request: Request): string | null {
-    const authHeader = request.headers.authorization;
-    return authHeader?.split(' ')[1] || null;
+  private extractTokenFromCookies(request: Request): string | null {
+    return request.cookies?.access_token || null;
   }
 }

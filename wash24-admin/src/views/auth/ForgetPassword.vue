@@ -9,15 +9,33 @@ import { ref } from 'vue';
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
 import CardFooter from '@/components/ui/card/CardFooter.vue';
-import { Loader2 } from 'lucide-vue-next';
+import { Loader2, UserRound } from 'lucide-vue-next';
+import { useAuth } from '@/composables/useAuth';
+import { useRouter } from 'vue-router';
 
 
-const identity = ref('')
+const router = useRouter();
+const username = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
 async function onSubmit(event: Event) {
-
+  event.preventDefault()
+  if (!username.value) {
+    errorMessage.value = 'Username is required'
+    return
+  }
+  isLoading.value = true
+  errorMessage.value = ''
+  try {
+    await useAuth().forgotPassword({ username: username.value })
+    await router.push({ name: 'OtpVerify' })
+    
+  } catch (error: any) {
+    errorMessage.value = error.message || 'Login failed. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -40,9 +58,8 @@ async function onSubmit(event: Event) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-
               <div class="grid gap-2">
-                <Input id="identity" placeholder="Enter email or phone number" type="text" v-model="identity"
+                <Input id="identity" placeholder="Enter email or phone number" type="text" v-model="username"
                   auto-capitalize="none" auto-complete="email" auto-correct="off" :disabled="isLoading" />
               </div>
             </CardContent>

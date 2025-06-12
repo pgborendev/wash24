@@ -1,15 +1,14 @@
 import * as express from 'express';
-import cors from 'cors';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as fs from 'fs';
 import * as https from 'https';
 import { join } from 'path';
-const path = require('path'); // Add this at top
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const port = process.env.API_PORT || 3000;
+  const port = process.env.API_PORT || 8080; // Changed to 8080 to match your API
   
   // HTTPS configuration
   const httpsOptions = {
@@ -18,19 +17,41 @@ async function bootstrap() {
   };
 
   const server = express();
+  
+  // Apply CORS middleware at the Express level first
+  server.use((req, res, next) => {
+    const allowedOrigins = [
+      'https://localhost:3000',
+      'http://localhost:3000'
+    ];
+    
+    const origin:any = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
+  });
+
   const app = await NestFactory.create(
-    AppModule, new ExpressAdapter(server), { httpsOptions, cors: true }
+    AppModule, 
+    new ExpressAdapter(server), 
+    { httpsOptions }
   );
 
-  // Enhanced CORS configuration
+    app.use(cookieParser());
+
+  
   app.enableCors({
     origin: [
-      'https://localhost:3000', // Your Nuxt frontend
-      process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : undefined // HTTP for dev
-    ].filter(Boolean),
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      'https://localhost:3000',
+      'http://localhost:3000'
+    ],
     credentials: true,
-    allowedHeaders: 'Content-Type,Authorization',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Authorization'
   });
 
   const publicDir = join(process.cwd(), 'public');
@@ -38,12 +59,10 @@ async function bootstrap() {
     fs.mkdirSync(publicDir, { recursive: true });
   }
 
-  // Serve static files from the correct location
   app.use('/public', express.static(publicDir));
 
   await app.init();
   
-  // Create HTTPS server
   https.createServer(httpsOptions, server)
     .listen(port, () => {
       console.log(`HTTPS Server running on port ${port}`);

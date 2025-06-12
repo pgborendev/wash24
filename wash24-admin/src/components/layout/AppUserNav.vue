@@ -1,17 +1,27 @@
 <script setup lang="ts">
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+  import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+  import { useRouter } from 'vue-router';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+  import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuShortcut,
+    DropdownMenuTrigger,
+  } from '@/components/ui/dropdown-menu'
+  import { useAuth } from '@/composables/useAuth';
+
+  const router = useRouter();
+
+  async function handleItemClick(itemName: string) {
+    console.log(`${itemName} was clicked`);
+    await useAuth().signOut();
+    await router.push({ name: 'LOGIN' })
+  }
 
 </script>
 
@@ -54,7 +64,7 @@ import {
         <DropdownMenuItem>New Team</DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
-      <DropdownMenuItem>
+      <DropdownMenuItem @select="handleItemClick('Logout')">
         Log out
         <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
       </DropdownMenuItem>
