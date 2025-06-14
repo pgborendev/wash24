@@ -7,6 +7,7 @@ const apiEndpoints = {
     checkAuth: `${API_BASE_URL}/auth/check`,
     signOut: `${API_BASE_URL}/auth/signout`,
     refresh: `${API_BASE_URL}/auth/refresh`,
+    resend_otp: `${API_BASE_URL}/auth/resend_otp`,
     forget_password_request: `${API_BASE_URL}/auth/forget_password_request`,
     otp_verify: `${API_BASE_URL}/auth/otp_verify`,
   },

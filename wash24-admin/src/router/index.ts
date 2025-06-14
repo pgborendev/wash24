@@ -7,6 +7,7 @@ import ForgetPassword from '@/views/auth/ForgetPassword.vue'
 import SigninView from '@/views/auth/Signin.vue'
 import apiEndpoints from '@/config/config'
 import OtpVerify from '@/views/auth/OtpVerify.vue'
+import ChangePassword from '@/views/auth/ChangePassword.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -51,6 +52,14 @@ const routes: Array<RouteRecordRaw> = [
     meta: { isBlankLayout: true },
     children: [
       { path: '', name: 'OtpVerify', component: OtpVerify },
+    ],
+  },
+  {
+    path: '/change_password',
+    component: BlankLayout,
+    meta: { isBlankLayout: true },
+    children: [
+      { path: '', name: 'ChangePassword', component: ChangePassword },
     ],
   }
 ]

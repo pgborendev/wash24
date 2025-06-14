@@ -12,6 +12,14 @@ import AuthenticationService from "@/services/AuthenticationService";
   export const useAuth = () => {
 
     const authService = new AuthenticationService(apiEndpoints);
+
+    const verifyOtp = async (payload: any) => {
+      return await authService.verifyOtp(payload);
+    };
+
+    const resendOtp = async (payload: any) => {
+      return await authService.resendOtp(payload);
+    };
   
     const signIn = async (payload: LoginPayload) => {
       return await authService.login({
@@ -22,6 +30,8 @@ import AuthenticationService from "@/services/AuthenticationService";
         deviceId: payload.deviceId
       })
     };
+
+    
     
     const signOut = async () => {
       return await authService.signOut();
@@ -34,6 +44,8 @@ import AuthenticationService from "@/services/AuthenticationService";
     return {
       signIn,
       signOut,
-      forgotPassword
+      forgotPassword,
+      verifyOtp,
+      resendOtp
     };
 };

@@ -14,6 +14,7 @@ export default class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromCookies(request);
+    const tokenType = this.extractTokenTypeFromCookies(request);
 
     if (!token) {
       throw new UnauthorizedException('Access token is required');
@@ -37,7 +38,7 @@ export default class AuthGuard implements CanActivate {
       }
 
       // Attach payload to request
-      request.user = {
+      request.payload = {
         userId: payload.userId,
         roles: payload.roles,
         jti: payload.jti
@@ -64,4 +65,10 @@ export default class AuthGuard implements CanActivate {
   private extractTokenFromCookies(request: Request): string | null {
     return request.cookies?.access_token || null;
   }
+
+  private extractTokenTypeFromCookies(request: Request): string | null {
+    return request.cookies?.token_type || null;
+  }
+
+
 }
