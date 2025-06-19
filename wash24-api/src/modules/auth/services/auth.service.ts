@@ -44,34 +44,20 @@ export class AuthService {
         }
     }
 
-    async signOut(accessToken: string) {
+    async signOut(payload: any) {
         const startTime = Date.now();
         const correlationId = uuidv4();
-        this.logger.debug(`[${correlationId}] Sign-out started - AccessToken:${accessToken}`);
-
         try {
-            const decoded = await this.jwtService.verifyAsync(accessToken);
-            const token = await this.tokenService.findTokenByJti(decoded.jti);
-
+            const token = await this.tokenService.findTokenByJti(payload.jti);
             if (!token) {
                 throw new BadRequestException({ error: 401, message: 'Invalid access token' });
             }
             if (token.isRevoked) {
                 throw new BadRequestException({ error: 402, message: 'This accesstoken has been revoked' });
             }
-            await this.tokenService.revokeToken(token.jti);
+            await this.tokenService.revokeToken(payload.jti);
             return { message: 'User signed out successfully' };
         } catch (error: any) {
-            this.logger.error({
-                message: 'Sign-out failed',
-                error: {
-                    name: error.name,
-                    message: error.message,
-                    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-                },
-                input: { accessToken },
-                correlationId
-            });
             throw error;
         } finally {
             const endTime = Date.now();

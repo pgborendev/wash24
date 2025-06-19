@@ -10,12 +10,15 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
-  Inject
+  Inject,
+  UseGuards,
+  Req
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ShopService } from '../services/shop.service';
 import { BaseController } from '../../core/controllers/base.controller';
 import { Shop } from '../schemas/shop.schema';
+import AuthGuard from 'src/modules/auth/guards/jwt.auth-guard';
 
 @Controller('/api/shops')
 export class ShopController extends BaseController<Shop> {
@@ -28,8 +31,10 @@ export class ShopController extends BaseController<Shop> {
   }
 
   @Post()
+  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('logo'))
   async create(
+    @Req() req: Request,
     @Body() createShopDto: any,
     @UploadedFile(
       new ParseFilePipe({
@@ -40,8 +45,9 @@ export class ShopController extends BaseController<Shop> {
         ],
       }),
     )
-    logoFile?: Express.Multer.File,) {    
-    return this.shopService.createWithLogo(createShopDto, logoFile);
+    logoFile?: Express.Multer.File,) {          
+    const payload = (req as any).payload;
+    return this.shopService.createWithLogo(createShopDto, payload.userId, logoFile);
   }
 
   @Put(':id/logo')

@@ -17,10 +17,14 @@ export default defineConfig({
       key: fs.readFileSync(path.resolve(__dirname, './certs/key.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, './certs/cert.pem'))
     },
-    host: 'localhost', // or your custom domain
+    host: '0.0.0.0', // Changed from 'localhost' to allow network access
     port: 3000,
     strictPort: true,
-    open: true // open browser on server start
+    open: true,
+    hmr: {
+      host: 'localhost', // Ensures HMR works correctly when accessing from other devices
+      protocol: 'wss' // WebSocket secure for HMR over HTTPS
+    }
   },
   preview: {
     https: {

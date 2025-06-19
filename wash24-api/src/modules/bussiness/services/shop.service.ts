@@ -17,8 +17,8 @@ export class ShopService extends BaseService<Shop> {
       return []; 
     }
 
-  async createWithLogo(createShopDto: any, logoFile?: Express.Multer.File): Promise<Shop> {
-    const shopData = { ...createShopDto };
+  async createWithLogo(createShopDto: any, ownerId: string, logoFile?: Express.Multer.File): Promise<Shop> {
+    const shopData = { ...createShopDto, owner:ownerId };
     
     if (logoFile) {
       shopData.logo = await this.fileUploadService.saveFile(logoFile, 'shops');

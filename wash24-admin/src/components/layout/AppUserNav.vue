@@ -1,39 +1,37 @@
 <script setup lang="ts">
 
-  import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-  import { useRouter } from 'vue-router';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useRouter } from 'vue-router';
 
-  import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuTrigger,
-  } from '@/components/ui/dropdown-menu'
-  import { useAuth } from '@/composables/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/composables/useAuth';
+import Button from '../ui/button/Button.vue';
+import { Icon } from '@iconify/vue';
 
-  const router = useRouter();
+const router = useRouter();
 
-  async function handleItemClick(itemName: string) {
-    console.log(`${itemName} was clicked`);
-    await useAuth().signOut();
-    await router.push({ name: 'LOGIN' })
-  }
+async function handleItemClick(itemName: string) {
+  console.log(`${itemName} was clicked`);
+  await useAuth().signOut();
+  await router.push({ name: 'LOGIN' })
+}
 
 </script>
 
 <template>
-  
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button variant="ghost" class="relative h-8 w-8 rounded-full">
-        <Avatar class="h-8 w-8">
-          <AvatarImage src="/avatars/01.png" alt="@shadcn" />
-          <AvatarFallback>SC</AvatarFallback>
-        </Avatar>
+      <Button variant="ghost" class="relative h-7 w-7 font-medium">
+        <Icon icon="lucide:user" class="w-5 h-5 transition-all duration-300 absolute inset-0 m-auto" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent class="w-56" align="end">
@@ -70,5 +68,5 @@
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
-  
+
 </template>

@@ -10,9 +10,11 @@ import { ItemService } from './services/item.service';
 import { Device, DeviceSchema } from './schemas/device.schema';
 import { Item, ItemSchema } from './schemas/item.schema';
 import { FileUploadService } from '../fileupload/services/fileupload.service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([
       { name: Shop.name, schema: ShopSchema},
       { name: Device.name, schema: DeviceSchema},

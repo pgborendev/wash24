@@ -12,17 +12,18 @@ import SidebarGroupContent from '../ui/sidebar/SidebarGroupContent.vue';
 import SidebarMenu from '../ui/sidebar/SidebarMenu.vue';
 import SidebarMenuItem from '../ui/sidebar/SidebarMenuItem.vue';
 import SidebarMenuButton from '../ui/sidebar/SidebarMenuButton.vue';
-import { Calendar, Inbox } from 'lucide-vue-next';
-    const items = [
+import { Icon } from '@iconify/vue';
+
+const items = [
     {
-      title: "Dashboard",
+      title: "Home",
       url: "/",
-      icon: Inbox,
+      icon: "lucide:home",
     },
     {
-      title: "Hello",
-      url: "/hello",
-      icon: Calendar,
+      title: "Shops",
+      url: "/shop",
+      icon: "lucide:store",
     }
   ];
 </script>
@@ -43,7 +44,7 @@ import { Calendar, Inbox } from 'lucide-vue-next';
               <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton asChild>
                     <RouterLink :to="item.url">
-                      <component :is="item.icon" />
+                       <Icon :icon="item.icon" class="size-4" aria-hidden="true"/>
                       <span>{{item.title}}</span>
                     </RouterLink>
                 </SidebarMenuButton>
@@ -53,7 +54,6 @@ import { Calendar, Inbox } from 'lucide-vue-next';
       </SidebarGroup>
     </SidebarContent>
     <SidebarFooter>
-      
     </SidebarFooter>
     
   </Sidebar>

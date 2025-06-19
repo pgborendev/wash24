@@ -13,7 +13,7 @@ export class MailService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    await this.initializeGmail();
+    // await this.initializeGmail();
   }
 
   private async initializeGmail() {

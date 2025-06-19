@@ -3,11 +3,15 @@ import { Controller, Post, Get, Param, Req, Res, UseGuards, BadRequestException,
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from '../services/auth.service';
 import AuthGuard from '../guards/jwt.auth-guard';
+import ResetGuard from '../guards/jwt.reset-password.guard';
+import { VerifyOtpGuard } from '../guards/jwt.verify-otp.guard';
 import { OtpService } from '../services/otp.service';
 import { TokenService } from '../services/token.service';
 import { UserService } from '../../identity/services/user.service';
 import { TokenType } from '../enums/auth.enums';
 import { ConfigService } from '@nestjs/config';
+import ResetPasswordGuard from '../guards/jwt.reset-password.guard';
+import { SignoutGuard } from '../guards/jwt.auth-signout.guard';
 
 @Controller('/api/auth')
 class AuthController {
@@ -20,18 +24,6 @@ class AuthController {
     private readonly configService: ConfigService,
     
   ) {}
-
-  private extractToken(request: Request): string | null {
-    // Explicitly type headers as an indexable object
-    const headers = request.headers as unknown as { [key: string]: string };
-    const authHeader = headers['authorization'];
-    return authHeader?.split(' ')[1] || null;
-  
-  }
-
-  private extractTokenFromCookies(request: Request): string | null {
-    return request.cookies?.access_token || null;
-  }
 
   @Post('signup')
   async signup(@Req() req: Request, @Res() res: Response): Promise<void> {
@@ -64,13 +56,12 @@ class AuthController {
               data.deviceId,
               data.ipAddress,
               data.userAgent,
-              TokenType.FORGET_PASSWORD_REQUEST);
+              TokenType.VERIFY_OTP_TOKEN);
 
-      this.setResetPasswordCookies(res, token);
-      const isProduction = process.env.NODE_ENV === 'production';
+      this.setResetPasswordCookies(res, 'VERIFY_OTP_TOKEN', token);
+
       const responseData = { 
-        message: 'Change request is successfully.',
-        ...(!isProduction && { token: token.accessToken, otp: otp })
+        message: 'OTP validate successfully', token: token.accessToken 
       };
       res.status(200).json(responseData); 
       return;
@@ -86,7 +77,7 @@ class AuthController {
   }
 
   @Post('resend_otp')
-  @UseGuards(AuthGuard)
+  @UseGuards(VerifyOtpGuard)
   async resendOtp(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {
       const data = req.body;
@@ -114,13 +105,11 @@ class AuthController {
               data.deviceId,
               data.ipAddress,
               data.userAgent,
-              TokenType.FORGET_PASSWORD_REQUEST);
+              TokenType.VERIFY_OTP_TOKEN);
 
-      this.setResetPasswordCookies(res, token);
-      const isProduction = process.env.NODE_ENV === 'production';
+      this.setResetPasswordCookies(res, 'VERIFY_OTP_TOKEN', token);
       const responseData = { 
-        message: 'Change request is successfully.',
-        ...(!isProduction && { token: token.accessToken, otp: otp })
+        message: 'OTP validate successfully', token: token.accessToken 
       };
       res.status(200).json(responseData); 
       return;
@@ -138,7 +127,7 @@ class AuthController {
   }
 
   @Post('otp_verify')
-  @UseGuards(AuthGuard)
+  @UseGuards(VerifyOtpGuard)
   async otpVerify(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {
 
@@ -183,13 +172,11 @@ class AuthController {
             req.body.deviceId,
             req.body.ipAddress,
             req.body.userAgent,
-            TokenType.OTP_VALIDATION);
-        this.setResetPasswordCookies(res, token);
-      const isProduction = process.env.NODE_ENV === 'production';
+            TokenType.UPDATE_PASSWORD_TOKEN);
+      
+      this.setResetPasswordCookies(res, 'UPDATE_PASSWORD_TOKEN', token);
       const data = { 
-        message: 'OTP validate successfully',
-        // Only include token in development mode
-        ...(!isProduction && { token: token.accessToken })
+        message: 'OTP validate successfully', token: token.accessToken 
       };
       res.status(200).json(data); 
       return;
@@ -205,7 +192,7 @@ class AuthController {
   }
 
   @Post('update_user_password')
-  @UseGuards(AuthGuard)
+  @UseGuards(ResetPasswordGuard)
   async changePassword(@Req() req: Request, @Res() res: Response): Promise<void> {
     try {
       await this.authService.changePassword(req.body);
@@ -226,20 +213,16 @@ class AuthController {
   }
 
   @Get('signout')
-  @UseGuards(AuthGuard)
+  @UseGuards(SignoutGuard)
   public async signout(@Req() req: Request, @Res() res: Response): Promise<void> {
       try {
-          const token = this.extractTokenFromCookies(req);
-
+          const payload = (req as any).payload;
+          const token = payload.token;
           if (!token) {
               res.status(401).json({ message: 'Unauthorized: Token missing' });
               return;
           }
-          await this.authService.signOut(token);
-          res.clearCookie('access_token');
-          res.clearCookie('refresh_token');
-          res.clearCookie('user_id');
-
+          await this.authService.signOut(payload);
           res.status(200).json({ message: 'Successfully signed out' });
           return;
       } catch (error) {
@@ -283,13 +266,8 @@ class AuthController {
   }
 
   @Post('signin')
-  async signin(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response
-  ): Promise<{ message: string }> {
+  async signin(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
     try {
-      console.log('Received signin request:', req.body);
-      
       const data = {
         username: req.body.username,
         password: req.body.password,
@@ -305,17 +283,15 @@ class AuthController {
           ? req.headers['user-agent'] 
           : ''
       };
-
       const token = await this.authService.signIn(data);
-      this.setAuthCookies(res, token);
-      return { message: 'Authentication successful' };
-
+      const responseData = {  message: 'OTP validate successfully', data: {userId: token.userId, accessToken: token.accessToken, refreshToken: token.refreshToken} };
+      res.status(200).json(responseData); 
+      return;
     } catch (error) {
       this.clearAuthCookies(res);
       if (error instanceof BadRequestException) {
         throw new BadRequestException(error.message);
       }
-      
       throw new InternalServerErrorException('Internal Server Error');
     }
   }
@@ -339,105 +315,55 @@ class AuthController {
     }, {} as Record<string, string>);
   }
 
-  private setResetPasswordCookies(res: Response, tokens: any) {
-    const isProduction = process.env.NODE_ENV === 'production';
+  private setResetPasswordCookies(res: Response, type:string, tokens: any) {
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const accessTokenExpiresIn = this.parseDurationToMs(
         this.configService.get<string>('JWT_FORGET_PASSWORD_EXPIRES_IN', '1m')
     );
-
-    res.cookie('token_type', 'RESET_TOKEN', {
+    if (type == 'VERIFY_OTP_TOKEN') {
+      res.cookie('VERIFY_OTP_TOKEN', tokens.accessToken, {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? 'none' : 'lax',
         maxAge: accessTokenExpiresIn,
         path: '/'
-    });
+      });
+    }
 
-    res.cookie('access_token', tokens.accessToken, {
+    if (type == 'UPDATE_PASSWORD_TOKEN') {
+      res.cookie('UPDATE_PASSWORD_TOKEN', tokens.accessToken, {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? 'none' : 'lax',
         maxAge: accessTokenExpiresIn,
         path: '/'
-    });
+      });
+    }
+
   }
 
   private clearResetPasswordCookies(res: Response) {
     res.clearCookie('access_token', { path: '/' });
   }
 
-  private setAuthCookies(res: Response, tokens: any) {
-    const isProduction = process.env.NODE_ENV === 'production';
+  private parseDurationToMs(duration: string): number {
+      const match = duration.match(/^(\d+)([smhd])$/);
+      if (!match) {
+          throw new Error(`Invalid duration format: ${duration}`);
+      }
 
-    // Get expiration times from config and convert to milliseconds
-    const accessTokenExpiresIn = this.parseDurationToMs(
-        this.configService.get<string>('JWT_AUTH_EXPIRES_IN', '1d')
-    );
-    
-    const refreshTokenExpiresIn = this.parseDurationToMs(
-        this.configService.get<string>('JWT_AUTH_REFRESH_EXPIRES_IN', '15d')
-    );
+      const amount = parseInt(match[1]);
+      const unit = match[2];
 
-    // Set cookies with calculated expiration times
-    res.cookie('token_type', 'AUTH_TOKEN', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: accessTokenExpiresIn,
-        path: '/'
-    });
-    
-    // Access token
-    res.cookie('access_token', tokens.accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: accessTokenExpiresIn,
-        path: '/'
-    });
-
-    // Refresh token
-    res.cookie('refresh_token', tokens.refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: refreshTokenExpiresIn,
-        path: '/auth' // Should match your refresh endpoint path
-    });
-
-    // User ID
-    res.cookie('user_id', tokens.userId, {
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: accessTokenExpiresIn,
-        path: '/'
-    });
-}
-
-/**
- * Converts duration string to milliseconds
- * @example "1d" → 86400000
- * @example "2h" → 7200000
- * @example "30m" → 1800000
- */
-private parseDurationToMs(duration: string): number {
-    const match = duration.match(/^(\d+)([smhd])$/);
-    if (!match) {
-        throw new Error(`Invalid duration format: ${duration}`);
-    }
-
-    const amount = parseInt(match[1]);
-    const unit = match[2];
-
-    switch (unit) {
-        case 's': return amount * 1000;
-        case 'm': return amount * 60 * 1000;
-        case 'h': return amount * 60 * 60 * 1000;
-        case 'd': return amount * 24 * 60 * 60 * 1000;
-        default: throw new Error(`Unknown duration unit: ${unit}`);
-    }
-}
+      switch (unit) {
+          case 's': return amount * 1000;
+          case 'm': return amount * 60 * 1000;
+          case 'h': return amount * 60 * 60 * 1000;
+          case 'd': return amount * 24 * 60 * 60 * 1000;
+          default: throw new Error(`Unknown duration unit: ${unit}`);
+      }
+  }
 
   private clearAuthCookies(res: Response) {
         res.clearCookie('access_token', { path: '/' });

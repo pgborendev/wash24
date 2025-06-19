@@ -12,6 +12,7 @@ import CardFooter from '@/components/ui/card/CardFooter.vue';
 import { Loader2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { authDataStore } from '@/store/authDataStore';
 
 const router = useRouter();
 const username = ref('')
@@ -30,14 +31,15 @@ async function onSubmit(event: Event) {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    await useAuth().signIn({
+    const response: any = await useAuth().signIn({
       username: username.value,
       password: password.value,
       system: 'WASH24_WEB_POS',
       deviceType: 'DESKTOP',
-      deviceId: 'device123' 
+      deviceId: 'device123'
     })
-    await router.push({ name: 'Dashboard' })
+    authDataStore().setData(response.data);
+    await router.push({ name: 'Home' })
   } catch (error: any) {
     errorMessage.value = error.message || 'Login failed. Please try again.'
   } finally {
@@ -66,11 +68,6 @@ async function onSubmit(event: Event) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-
-              <div v-if="errorMessage" class="text-sm font-medium text-destructive">
-                {{ errorMessage }}
-              </div>
-
               <div class="grid gap-2">
                 <Label for="username">User ID</Label>
                 <Input id="username" v-model="username" type="text" placeholder="Enter username, email, phone number"
@@ -79,6 +76,9 @@ async function onSubmit(event: Event) {
               <div class="grid gap-2">
                 <Label for="password">Password</Label>
                 <PasswordInput id="password" v-model="password" :disabled="isLoading" />
+              </div>
+              <div v-if="errorMessage" class="text-sm pt-2 text-center font-medium text-destructive">
+                {{ errorMessage }}
               </div>
             </CardContent>
             <CardFooter class="flex justify-between px-6 pb-6">

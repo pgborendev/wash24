@@ -24,9 +24,6 @@ function handleSelectLink(link: string) {
     </Button>
   </SidebarMenuButton>
 
-  
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

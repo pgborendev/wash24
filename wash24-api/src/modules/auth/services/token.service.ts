@@ -90,7 +90,7 @@ export class TokenService {
         deviceId,
         ipAddress,
         userAgent,
-        TokenType.AUTHENTICATION_VALIDATION,
+        TokenType.AUTH_VALIDATION,
         accessTokenExpiresIn,
         refreshTokenExpiresIn
       );

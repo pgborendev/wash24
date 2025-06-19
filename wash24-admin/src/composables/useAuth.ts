@@ -31,8 +31,6 @@ import AuthenticationService from "@/services/AuthenticationService";
       })
     };
 
-    
-    
     const signOut = async () => {
       return await authService.signOut();
     };

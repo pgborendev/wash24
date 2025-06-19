@@ -1,5 +1,6 @@
 import type { ApiEndpoints } from '@/config/config';
 import { BaseService } from './BaseService';
+import { authDataStore } from '@/store/authDataStore';
 
 interface AuthPayload {
     username: string;
@@ -27,7 +28,6 @@ class AuthenticationService extends BaseService {
   resendOtp(payload: any): Promise<void> {
     return this.apiFetch<void>(this.apiEndpoints.auth.resend_otp, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: payload
     });
   }
@@ -35,7 +35,6 @@ class AuthenticationService extends BaseService {
   forgotPassword(payload: any): Promise<void> {
     return this.apiFetch<void>(this.apiEndpoints.auth.forget_password_request, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: payload
     });
   }
@@ -43,27 +42,29 @@ class AuthenticationService extends BaseService {
   verifyOtp(payload: any): Promise<void> {
     return this.apiFetch<void>(this.apiEndpoints.auth.otp_verify, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: payload
     });
   }
 
-  signOut(): Promise<void> {
-    return this.apiFetch<void>(this.apiEndpoints.auth.signOut, {
+  async signOut(): Promise<void> {
+    const respone = await this.apiFetch<void>(this.apiEndpoints.auth.signOut, {
       method: 'GET',
+      headers: this.getAuthBearer()
     });
+    authDataStore().clearData();
+    return respone;
   }
 
   checkAuth(): Promise<{ isAuthenticated: boolean; userId: string }> {
     return this.apiFetch<{ isAuthenticated: boolean; userId: string }>(this.apiEndpoints.auth.checkAuth, {
       method: 'GET',
+      headers: this.getAuthBearer(),
     });
   }
 
   login(payload: any): Promise<AuthResponse> {
     return this.apiFetch<AuthResponse>(this.apiEndpoints.auth.signIn, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: payload
     });
   }

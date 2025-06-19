@@ -141,4 +141,25 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-caps-lock-indicator,
+  input[type="password"]::-webkit-reveal-password-toggle {
+    visibility: hidden;
+    display: none;
+    pointer-events: none;
+    position: absolute;
+    right: -9999px;
+  }
+
+  /* For Firefox */
+  input[type="password"][type="password"] {
+    -moz-appearance: textfield;
+  }
+
+  /* For Edge */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
 }

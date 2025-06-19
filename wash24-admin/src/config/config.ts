@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://localhost:8080/api';
+const API_BASE_URL = ' https://192.168.0.8:8080/api';
 
 const apiEndpoints = {
   base:`${API_BASE_URL}`,
@@ -11,6 +11,7 @@ const apiEndpoints = {
     forget_password_request: `${API_BASE_URL}/auth/forget_password_request`,
     otp_verify: `${API_BASE_URL}/auth/otp_verify`,
   },
+  shope: `${API_BASE_URL}/shops`,
   view: {
     doc_list: `${API_BASE_URL}/api`,
   }

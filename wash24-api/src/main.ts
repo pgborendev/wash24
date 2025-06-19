@@ -6,9 +6,10 @@ import * as fs from 'fs';
 import * as https from 'https';
 import { join } from 'path';
 import * as cookieParser from 'cookie-parser';
+import { networkInterfaces } from 'os';
 
 async function bootstrap() {
-  const port = process.env.API_PORT || 8080; // Changed to 8080 to match your API
+  const port = process.env.API_PORT || 8080;
   
   // HTTPS configuration
   const httpsOptions = {
@@ -18,15 +19,30 @@ async function bootstrap() {
 
   const server = express();
   
-  // Apply CORS middleware at the Express level first
+  // Get local IP addresses for CORS
+  const getLocalIPs = () => {
+    const nets = networkInterfaces();
+    const ips = ['localhost', '127.0.0.1'];
+    Object.values(nets).forEach(net => {
+      net?.forEach(({ family, internal, address }) => {
+        if (family === 'IPv4' && !internal) ips.push(address);
+      });
+    });
+    return ips;
+  };
+
+  const localIPs = getLocalIPs();
+  const allowedOrigins = [
+    'https://localhost:3000',
+    'http://localhost:3000',
+    ...localIPs.map(ip => `https://${ip}:3000`),
+    ...localIPs.map(ip => `http://${ip}:3000`)
+  ];
+
+  // Apply CORS middleware at the Express level
   server.use((req, res, next) => {
-    const allowedOrigins = [
-      'https://localhost:3000',
-      'http://localhost:3000'
-    ];
-    
-    const origin:any = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
+    const origin = req.headers.origin as string;
+    if (origin && allowedOrigins.some(allowed => origin.startsWith(allowed))) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
@@ -41,14 +57,10 @@ async function bootstrap() {
     { httpsOptions }
   );
 
-    app.use(cookieParser());
+  app.use(cookieParser());
 
-  
   app.enableCors({
-    origin: [
-      'https://localhost:3000',
-      'http://localhost:3000'
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization'
@@ -63,10 +75,19 @@ async function bootstrap() {
 
   await app.init();
   
+  // Start server on all network interfaces
   https.createServer(httpsOptions, server)
-    .listen(port, () => {
-      console.log(`HTTPS Server running on port ${port}`);
+  .listen({
+    port: port,
+    host: '0.0.0.0'
+  }, () => {
+    console.log(`HTTPS Server running on port ${port}`);
+    console.log('Available on:');
+    console.log(`- https://localhost:${port}`);
+    localIPs.forEach(ip => {
+      console.log(`- https://${ip}:${port}`);
     });
+  });
 }
 
 bootstrap();

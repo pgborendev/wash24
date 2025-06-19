@@ -4,6 +4,7 @@ import { ref, useModel, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 import Button from '@/components/ui/button/Button.vue';
 import Input from '@/components/ui/input/Input.vue';
+import { Icon } from '@iconify/vue';
 
 
 const props = defineProps<{
@@ -41,11 +42,12 @@ const showPassword = ref(false)
     >
       <Icon
         v-if="showPassword"
-        name="i-lucide-eye"
+        icon="lucide:eye"
         class="size-4"
         aria-hidden="true"
       />
-      <Icon v-else name="i-lucide-eye-off" class="size-4" aria-hidden="true" />
+      
+      <Icon v-else icon="lucide:eye-off" class="size-4" aria-hidden="true" />
       <span class="sr-only">
         {{ showPassword ? "Show password" : "Hide password" }}
       </span>

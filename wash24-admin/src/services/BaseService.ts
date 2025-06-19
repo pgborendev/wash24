@@ -1,20 +1,15 @@
 import type { ApiEndpoints } from '@/config/config';
-import { useUserStore } from '@/store/user'; 
+import { authDataStore } from '@/store/authDataStore';
 
 export class BaseService {
-  protected config = {
-    headers: {
-      'x-access-token': useUserStore().currentUser.accessToken,
-      'Content-Type': 'application/json; charset=utf-8',
-    },
-  };
 
-  protected config_formdata = {
-    headers: {
-      'x-access-token': useUserStore().currentUser.accessToken,
-      'Content-Type': 'multipart/form-data',
-    },
-  };
+
+  // protected config_formdata = {
+  //   headers: {
+  //     'Authorization': 'Bearer ' + authDataStore().accessToken,
+  //     'Content-Type': 'multipart/form-data',
+  //   },
+  // };
 
   protected apiEndpoints: ApiEndpoints;
 
@@ -22,15 +17,23 @@ export class BaseService {
     this.apiEndpoints = apiEndpoints;
   }
 
-  protected async apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
-    
+  protected getAuthBearer(): HeadersInit {
+    return { Authorization: `Bearer ${authDataStore().accessToken}` };
+  }
+
+  protected async apiFetch<T>(
+    url: string,
+    options: RequestInit = {},
+    isFormData: boolean = false
+  ): Promise<T> {
     const requestOptions: RequestInit = {
       ...options,
       headers: {
+        ...(!isFormData && { 'Content-Type': 'application/json' }), // Only set for non-FormData
         ...options.headers,
       },
-      credentials: 'include', // Required for cookies
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      credentials: 'include',
+      body: isFormData ? options.body : JSON.stringify(options.body),
     };
 
     const response = await fetch(url, requestOptions);

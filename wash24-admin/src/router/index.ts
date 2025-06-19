@@ -1,31 +1,39 @@
 import { createWebHistory, createRouter, type RouteRecordRaw } from 'vue-router'
-import Dashboard from '@/views/Dashboard.vue'
-import HelloWorld from '@/views/HelloWorld.vue'
+import Home from '@/views/Home.vue'
+import ShopList from '@/views/shop/ShopList.vue'
+
 import AppLayout from '@/layouts/AppLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import ForgetPassword from '@/views/auth/ForgetPassword.vue'
 import SigninView from '@/views/auth/Signin.vue'
-import apiEndpoints from '@/config/config'
 import OtpVerify from '@/views/auth/OtpVerify.vue'
 import ChangePassword from '@/views/auth/ChangePassword.vue'
+import { authDataStore } from '@/store/authDataStore'
+import AddNewShop from '@/views/shop/AddNewShop.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     component: AppLayout,
-    redirect: "/dashboards",
+    redirect: "/home",
     meta: { isBlankLayout: false },
     children: [
       {  
-        path: "/dashboards", 
-        name: 'Dashboard', 
-        component: Dashboard, 
+        path: "/home", 
+        name: 'Home', 
+        component: Home, 
         meta: { requiresAuth: true }
       },
       { 
-        path: '/hello', 
-        name: 'HelloWorld', 
-        component: HelloWorld, 
+        path: '/shop', 
+        name: 'SHOP_LIST', 
+        component: ShopList, 
+        meta: { requiresAuth: true } 
+      },
+      { 
+        path: '/shop/add_new', 
+        name: 'SHOP_ADD_NEW', 
+        component: AddNewShop, 
         meta: { requiresAuth: true } 
       },
     ],
@@ -71,15 +79,11 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   // Lazy import the AuthenticationService to ensure Pinia is initialized
-  const { default: AuthenticationService } = await import('@/services/AuthenticationService')
-  const authService = new AuthenticationService(apiEndpoints)
   
-  // await authService.signOut();
-  const checkAuth = await authService.checkAuth();
-  
-  if (to.meta.requiresAuth && !checkAuth.isAuthenticated) {
+  const isLogin = authDataStore().isLoggedIn;
+  if (to.meta.requiresAuth && !isLogin) {
     next('/login'); // Redirect to login page if route requires auth and user is not authenticated
-  } else if (to.path === '/login' && checkAuth.isAuthenticated) {
+  } else if (to.path === '/login' && isLogin) {
     next('/'); // Redirect away from login if user is already authenticated
   } else {
     next(); // Continue navigation
