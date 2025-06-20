@@ -55,6 +55,5 @@ const items = [
     </SidebarContent>
     <SidebarFooter>
     </SidebarFooter>
-    
   </Sidebar>
 </template>

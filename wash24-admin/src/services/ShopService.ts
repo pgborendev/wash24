@@ -15,6 +15,13 @@ class ShopService extends BaseService {
         body: shop.toFormData(),
     }, true);
   }
+
+  public async list(): Promise<any> {
+    return await this.apiFetch<any>(this.apiEndpoints.shope, {
+        method: 'GET',
+        headers: this.getAuthBearer(),
+    });
+  }
   
 }
 

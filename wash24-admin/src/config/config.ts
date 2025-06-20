@@ -1,7 +1,9 @@
-const API_BASE_URL = ' https://192.168.0.8:8080/api';
+
+const BASE_URL = ' https://192.168.0.8:8080';
+const API_BASE_URL = `${BASE_URL}/api`;
 
 const apiEndpoints = {
-  base:`${API_BASE_URL}`,
+  base:`${BASE_URL}`,
   auth: {
     signIn: `${API_BASE_URL}/auth/signin`,
     checkAuth: `${API_BASE_URL}/auth/check`,

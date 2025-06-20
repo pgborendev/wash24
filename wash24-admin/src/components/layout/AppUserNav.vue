@@ -30,13 +30,18 @@ async function handleItemClick(itemName: string) {
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button variant="ghost" class="relative h-7 w-7 font-medium">
-        <Icon icon="lucide:user" class="w-5 h-5 transition-all duration-300 absolute inset-0 m-auto" />
-      </Button>
+      <Avatar>
+        <AvatarImage src="https://localhost:8080/public/uploads/profile/avatar.jpeg" alt="@unovue" />
+        <AvatarFallback>CN</AvatarFallback>
+      </Avatar>
     </DropdownMenuTrigger>
     <DropdownMenuContent class="w-56" align="end">
       <DropdownMenuLabel class="font-normal flex">
-        <div class="flex flex-col space-y-1">
+        <div class="flex flex-col space-y-1 w-full items-center p-2">
+          <Avatar>
+            <AvatarImage src="https://localhost:8080/public/uploads/profile/avatar.jpeg" alt="@unovue" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
           <p class="text-sm font-medium leading-none">
             shadcn
           </p>
@@ -48,23 +53,18 @@ async function handleItemClick(itemName: string) {
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
         <DropdownMenuItem>
+          <Icon icon="lucide:user" />
           Profile
-          <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          Billing
-          <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
+          <Icon icon="lucide:settings" />
           Settings
-          <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
         </DropdownMenuItem>
-        <DropdownMenuItem>New Team</DropdownMenuItem>
       </DropdownMenuGroup>
       <DropdownMenuSeparator />
       <DropdownMenuItem @select="handleItemClick('Logout')">
+        <Icon icon="lucide:log-out" />
         Log out
-        <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>

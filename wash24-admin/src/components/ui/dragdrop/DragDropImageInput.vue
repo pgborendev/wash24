@@ -11,6 +11,10 @@ const props = defineProps({
     type: String,
     required: true
   },
+  placeholder: {
+    type: String,
+    required: true
+  },
    modelValue: {
     type: [String, File, null] as PropType<string | File | null>,
     default: null
@@ -22,7 +26,7 @@ const props = defineProps({
   height: {
     type: String,
     default: ''
-  }
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -177,7 +181,9 @@ onUnmounted(() => {
       <!-- Upload UI -->
       <div v-if="!croppedImage" class="space-y-2 h-full flex flex-col items-center justify-center">
         <!-- <Upload class="w-12 h-12 mx-auto text-gray-400" /> -->
-        <p class="text-sm font-medium">Drag and drop your image here</p>
+        <p class="text-sm font-medium">
+          {{ placeholder }}
+        </p>
       </div>
 
       <!-- Cropped Result -->

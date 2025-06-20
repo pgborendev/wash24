@@ -24,7 +24,7 @@ withDefaults(defineProps<{
       <div class="ml-auto flex items-center gap-2 pr-1">
         <!-- <Search /> -->
         <AppUserNav />
-        <ThemeToggle />
+        <!-- <ThemeToggle /> -->
       </div>
     </div>
   </header>
