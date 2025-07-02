@@ -1,6 +1,5 @@
 import { createWebHistory, createRouter, type RouteRecordRaw } from 'vue-router'
-import Home from '@/views/Home.vue'
-import ShopList from '@/views/shop/ShopList.vue'
+import ShopListView from '@/views/shop/ShopListView.vue'
 
 import AppLayout from '@/layouts/AppLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
@@ -9,33 +8,36 @@ import SigninView from '@/views/auth/Signin.vue'
 import OtpVerify from '@/views/auth/OtpVerify.vue'
 import ChangePassword from '@/views/auth/ChangePassword.vue'
 import { authDataStore } from '@/store/authDataStore'
-import AddNewShop from '@/views/shop/AddNewShop.vue'
+import ShopAdd from '@/views/shop/ShopAddNew.vue'
+import ShopDetailView from '@/views/shop/ShopDetailView.vue'
+
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     component: AppLayout,
-    redirect: "/home",
+    redirect: "/",
     meta: { isBlankLayout: false },
     children: [
       {  
-        path: "/home", 
+        path: "/", 
         name: 'Home', 
-        component: Home, 
+        component: ShopListView, 
         meta: { requiresAuth: true }
       },
       { 
-        path: '/shop', 
-        name: 'SHOP_LIST', 
-        component: ShopList, 
+        path: '/:id', 
+        name: 'SHOP_DETAIL_VIEW', 
+        component: ShopDetailView, 
         meta: { requiresAuth: true } 
       },
       { 
-        path: '/shop/add_new', 
+        path: '/new_shop', 
         name: 'SHOP_ADD_NEW', 
-        component: AddNewShop, 
+        component: ShopAdd, 
         meta: { requiresAuth: true } 
       },
+      
     ],
   },
   {

@@ -1,5 +1,6 @@
 export default class ShopModel {
 
+  id:string;
   name: string;
   phone: string;
   email: string;
@@ -8,6 +9,7 @@ export default class ShopModel {
   logo: File | string | null;
 
   constructor(data: Partial<ShopModel> = {}) {
+    this.id = data.id || '';
     this.name = data.name || '';
     this.phone = data.phone || '';
     this.email = data.email || '';

@@ -1,3 +1,3 @@
 export class BaseDto {
-    _id: string;
+	_id: string;
 }

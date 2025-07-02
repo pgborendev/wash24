@@ -1,5 +1,6 @@
 
-const BASE_URL = ' https://192.168.0.8:8080';
+// const BASE_URL = ' https://192.168.0.8:8080';
+const BASE_URL = ' https://localhost:8080';
 const API_BASE_URL = `${BASE_URL}/api`;
 
 const apiEndpoints = {

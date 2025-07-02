@@ -1,17 +1,14 @@
-import { Controller, Inject, UseGuards } from '@nestjs/common';
+import { Controller, Inject } from "@nestjs/common";
 import { BaseController } from "../../core/controllers/base.controller";
 
-import { DeviceService } from '../services/device.service'; 
-import { Device } from '../schemas/device.schema';
+import { DeviceService } from "../services/device.service";
+import { Device } from "../schemas/device.schema";
 
-
-@Controller('/api/devices')
+@Controller("/api/devices")
 class DeviceController extends BaseController<Device> {
-
-  constructor(@Inject(DeviceService) service: DeviceService) {
-    super(service);
-  }
- 
+	constructor(@Inject(DeviceService) service: DeviceService) {
+		super(service);
+	}
 }
 
 export { DeviceController };

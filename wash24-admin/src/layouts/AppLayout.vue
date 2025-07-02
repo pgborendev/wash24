@@ -8,7 +8,7 @@
 
 <template>
   <SidebarProvider>
-      <AppSidebar/>
+      <!-- <AppSidebar/> -->
       <SidebarInset class="min-w-0 w-full h-full flex-1 overflow-x-auto">
       <main>
         <router-view></router-view>

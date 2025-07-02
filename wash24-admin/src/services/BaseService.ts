@@ -3,14 +3,6 @@ import { authDataStore } from '@/store/authDataStore';
 
 export class BaseService {
 
-
-  // protected config_formdata = {
-  //   headers: {
-  //     'Authorization': 'Bearer ' + authDataStore().accessToken,
-  //     'Content-Type': 'multipart/form-data',
-  //   },
-  // };
-
   protected apiEndpoints: ApiEndpoints;
 
   constructor(apiEndpoints: ApiEndpoints) {

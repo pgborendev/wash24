@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import type { PropType } from 'vue';
 import { Cropper as VueAdvancedCropper } from 'vue-advanced-cropper';
 import 'vue-advanced-cropper/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import apiEndpoints from '@/config/config';
 
 const props = defineProps({
   id: {
@@ -15,9 +16,13 @@ const props = defineProps({
     type: String,
     required: true
   },
-   modelValue: {
+  modelValue: {
     type: [String, File, null] as PropType<string | File | null>,
     default: null
+  },
+  previewUrl: {
+    type: String,
+    default: ''
   },
   width: {
     type: String,
@@ -29,12 +34,13 @@ const props = defineProps({
   },
 });
 
+
 const emit = defineEmits(['update:modelValue']);
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const cropper = ref<InstanceType<typeof VueAdvancedCropper> | null>(null);
 const imageSrc = ref<string | null>(null);
-const croppedImage = ref<string | null>(null);
+const localImage = ref<string | null>(null); // For locally processed images
 const isDialogOpen = ref(false);
 const isDragging = ref(false);
 const aspectRatio = ref<number | undefined>(undefined);
@@ -46,23 +52,36 @@ const aspectRatios = [
   { label: 'Portrait (9:16)', value: 9/16 },
 ];
 
+// Computed property to determine what to display
+const displayImage = computed(() => {
+  if (localImage.value) return localImage.value;
+  if (props.previewUrl) return apiEndpoints.base + props.previewUrl;
+  return null;
+});
+
 const clearInternalState = () => {
-  if (croppedImage.value && croppedImage.value.startsWith('blob:')) {
-    URL.revokeObjectURL(croppedImage.value);
+  if (localImage.value && localImage.value.startsWith('blob:')) {
+    URL.revokeObjectURL(localImage.value);
   }
-  croppedImage.value = null;
+  localImage.value = null;
   if (fileInput.value) fileInput.value.value = '';
 };
-
 
 watch(() => props.modelValue, (newValue) => {
   if (newValue === null || newValue === undefined || newValue === '') {
     clearInternalState();
-  } else if (typeof newValue === 'string') {
-    croppedImage.value = newValue;
+  } else if (newValue instanceof File) {
+    // Convert File to object URL for preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      localImage.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(newValue);
+  } else if (typeof newValue === 'string' && (newValue.startsWith('data:') || newValue.startsWith('blob:'))) {
+    // Handle base64 or blob URLs
+    localImage.value = newValue;
   }
 }, { immediate: true });
-
 
 const triggerFileInput = () => {
   fileInput.value?.click();
@@ -77,7 +96,7 @@ const handleFileSelect = (e: Event) => {
 
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault();
-  if (!croppedImage.value) {
+  if (!displayImage.value) {
     isDragging.value = true;
   }
 };
@@ -89,7 +108,7 @@ const handleDragLeave = () => {
 const handleDrop = (e: DragEvent) => {
   e.preventDefault();
   isDragging.value = false;
-  if (!croppedImage.value && e.dataTransfer?.files && e.dataTransfer.files[0]) {
+  if (!displayImage.value && e.dataTransfer?.files && e.dataTransfer.files[0]) {
     processFile(e.dataTransfer.files[0]);
   }
 };
@@ -112,9 +131,17 @@ const confirmCrop = () => {
   if (cropper.value) {
     const { canvas } = cropper.value.getResult();
     if (canvas) {
-      croppedImage.value = canvas.toDataURL('image/jpeg', 0.9);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create a File object from the blob
+          const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+          emit('update:modelValue', file);
+          
+          // Create preview URL
+          localImage.value = URL.createObjectURL(blob);
+        }
+      }, 'image/jpeg', 0.9);
       isDialogOpen.value = false;
-      emit('update:modelValue', croppedImage.value);
     }
   }
 };
@@ -127,8 +154,7 @@ const cancelCrop = () => {
 
 const startOver = (e: Event) => {
   e.stopPropagation();
-  croppedImage.value = null;
-  if (fileInput.value) fileInput.value.value = '';
+  clearInternalState();
   emit('update:modelValue', null);
 };
 
@@ -137,21 +163,8 @@ onUnmounted(() => {
 });
 </script>
 
-<style>
-.cropper {
-  background: #f0f0f0;
-}
-
-.cropper .cropper-image {
-  max-width: none !important;
-  max-height: none !important;
-}
-</style>
-
 <template>
-  <!-- DragDropImageInput.vue -->
   <div class="pt-1">
-    <!-- File Input (hidden) -->
     <input
       type="file"
       ref="fileInput"
@@ -160,38 +173,39 @@ onUnmounted(() => {
       @change="handleFileSelect"
     />
 
-    <!-- Drag & Drop Zone -->
     <div
       :id="id"
       class="border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors relative"
       :class="{
-        'border-blue-500 bg-blue-50': isDragging && !croppedImage,
-        'hover:border-blue-400': !isDragging && !croppedImage,
-        'min-h-[120px] p-4': !croppedImage,
-        'p-0': croppedImage
+        'border-blue-500 bg-blue-50': isDragging && !displayImage,
+        'hover:border-blue-400': !isDragging && !displayImage,
+        'min-h-[120px] p-4': !displayImage,
+        'p-0': displayImage
       }"
       :style="{
         width: width || '100%',
-        height: height || (croppedImage ? 'auto' : '200px')
+        height: height || (displayImage ? 'auto' : '200px')
       }"
-      @click="!croppedImage && triggerFileInput()"
+      @click="!displayImage && triggerFileInput()"
       @dragover.prevent="handleDragOver"
       @dragleave="handleDragLeave"
       @drop.prevent="handleDrop">
-      <!-- Upload UI -->
-      <div v-if="!croppedImage" class="space-y-2 h-full flex flex-col items-center justify-center">
-        <!-- <Upload class="w-12 h-12 mx-auto text-gray-400" /> -->
+      
+      <div v-if="!displayImage" class="space-y-2 h-full flex flex-col items-center justify-center">
         <p class="text-sm font-medium">
           {{ placeholder }}
         </p>
       </div>
 
-      <!-- Cropped Result -->
       <div v-else class="relative w-full h-full">
         <img 
-          :src="croppedImage" class="rounded-md object-contain w-full h-full"
+          :src="displayImage" 
+          class="rounded-md object-contain w-full h-full"
+          :style="{
+            width: width || '100%',
+            height: height || 'auto'
+          }"
         />
-        <!-- Close button -->
         <button
           @click.stop="startOver"
           class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
@@ -203,7 +217,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Cropper Dialog -->
     <Dialog v-model:open="isDialogOpen">
       <DialogContent class="sm:max-w-[625px]">
         <DialogHeader>
@@ -213,7 +226,6 @@ onUnmounted(() => {
           </DialogDescription>
         </DialogHeader>
         
-        <!-- Cropper Area -->
         <div class="h-[400px] relative bg-gray-100 rounded-md overflow-hidden">
           <VueAdvancedCropper
             v-if="imageSrc"
@@ -229,7 +241,6 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- Aspect Ratio Controls -->
         <div class="flex flex-wrap gap-2">
           <Button
             v-for="ratio in aspectRatios"
@@ -257,3 +268,13 @@ onUnmounted(() => {
   </div>
 </template>
 
+<style>
+.cropper {
+  background: #f0f0f0;
+}
+
+.cropper .cropper-image {
+  max-width: none !important;
+  max-height: none !important;
+}
+</style>
