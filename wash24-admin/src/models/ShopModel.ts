@@ -25,16 +25,19 @@ export default class ShopModel {
     formData.append('email', this.email);
     formData.append('bakongId', this.bakongId);
     formData.append('address', this.address);
-  
     if (this.logo) {
-      if (typeof this.logo === 'string' && this.logo.startsWith('data:')) {
-        const blob = this.dataURLtoBlob(this.logo);
-        formData.append('logo', blob, 'shop-logo.jpg');
+      if (typeof this.logo === 'string') {
+        if (this.logo.startsWith('data:')) {
+          const blob = this.dataURLtoBlob(this.logo);
+          formData.append('logo', blob, 'shop-logo.jpg');
+        }
+        else {
+          formData.append('logo', this.logo);  
+        }
       } else if (this.logo instanceof File) {
         formData.append('logo', this.logo);
       }
     }
-    
     return formData;
   }
 

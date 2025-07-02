@@ -32,31 +32,44 @@ export class ShopService extends BaseService<Shop> {
 	}
 
 	async updateWithLogo(
-		_id: string,
-		shop: Shop,
-		logoFile?: Express.Multer.File): Promise<Shop> {
+    _id: string,
+    shop: Shop,
+    logoFile?: Express.Multer.File): Promise<Shop> {
+    const existingDoc = await this.model.findById(_id).exec();
 
-		const existingDoc = await this.model.findById(_id).exec();
+    if (!existingDoc) {
+        throw new NotFoundException(`Document with ID ${_id} not found`);
+    }
 
-		if (!existingDoc) {
-			throw new NotFoundException(`Document with ID ${_id} not found`);
+    if ("deleted" in existingDoc && existingDoc["deleted"]) {
+        throw new ForbiddenException("Cannot update a document marked as deleted");
+    }
+
+	if (existingDoc.logo) {
+		 const shouldRemoveLogo = existingDoc.logo && (shop.logo === null || shop.logo === undefined);
+		if (shouldRemoveLogo) {
+			await this.fileUploadService.deleteFile(existingDoc.logo);
+			shop.logo = null;
 		}
-
-		if ("deleted" in existingDoc && existingDoc["deleted"]) {
-			throw new ForbiddenException("Cannot update a document marked as deleted");
-		}
-		if (logoFile) {
-			shop.logo = await this.fileUploadService.saveFile(logoFile, "shops");
-		}
-
-		const updatedShop = await this.model
-			.findByIdAndUpdate(_id, { $set: shop }, { new: true, runValidators: true })
-			.populate(this.getPopulation())
-			.orFail(() => new NotFoundException(`Document with ID ${_id} not found after update`))
-			.exec();
-
-		return updatedShop;
 	}
+
+    // Handle new logo upload
+    if (logoFile) {
+        // Remove old logo if exists
+        if (existingDoc.logo) {
+            await this.fileUploadService.deleteFile(existingDoc.logo);
+        }
+        // Save new logo
+        shop.logo = await this.fileUploadService.saveFile(logoFile, "shops");
+    }
+
+    const updatedShop = await this.model
+        .findByIdAndUpdate(_id, { $set: shop }, { new: true, runValidators: true })
+        .orFail(() => new NotFoundException(`Document with ID ${_id} not found after update`))
+        .exec();
+
+    return updatedShop;
+}
 
 	async updateLogo(shopId: string, logoFile: Express.Multer.File): Promise<Shop> {
 		const shop = await this.model.findById(shopId);

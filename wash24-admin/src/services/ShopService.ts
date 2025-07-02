@@ -22,7 +22,7 @@ class ShopService extends BaseService {
       : this.apiEndpoints.shope;
       
     return this.apiFetch<any>(endpoint, {
-      method: shop.id ? 'PATCH' : 'POST',
+      method: shop.id ? 'PUT' : 'POST',
       headers: this.getAuthBearer(),
       body: shop.toFormData(),
     }, true);

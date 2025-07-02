@@ -28,8 +28,8 @@ export class Shop extends Document {
 	@Prop({ type: String, required: true })
 	bakongId: string;
 
-	@Prop({ type: String, required: false })
-	logo: string;
+	@Prop({ type: String, required: false, default: null })
+  logo: string | null;
 
 	@Prop({
 		type: Types.ObjectId,
